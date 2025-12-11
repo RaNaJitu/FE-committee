@@ -31,6 +31,9 @@ export default function DashboardPage({ token, profile, onLogout }) {
         commissionMaxMember: "",
         committeeAmount: "",
         noOfMonths: "",
+        startCommitteeDate: "",
+        fineAmount: "",
+        extraDaysForFine: "",
     });
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState("");
@@ -60,6 +63,9 @@ export default function DashboardPage({ token, profile, onLogout }) {
             commissionMaxMember: "",
             committeeAmount: "",
             noOfMonths: "",
+            startCommitteeDate: "",
+            fineAmount: "",
+            extraDaysForFine: "",
         });
         setCreateError("");
     };
@@ -95,6 +101,47 @@ export default function DashboardPage({ token, profile, onLogout }) {
             return;
         }
 
+        const startCommitteeDate = createForm.startCommitteeDate.trim();
+        if (!startCommitteeDate) {
+            setCreateError("Please select a start committee date.");
+            return;
+        }
+
+        // Validate date format (ISO format: 2026-01-01T12:39:43.495Z)
+        const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+        if (!isoDateRegex.test(startCommitteeDate)) {
+            setCreateError("Please select a valid start committee date.");
+            return;
+        }
+
+        const selectedDate = new Date(startCommitteeDate);
+        if (isNaN(selectedDate.getTime())) {
+            setCreateError("Please select a valid start committee date.");
+            return;
+        }
+
+        // Validate date is not in the past
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDateOnly = new Date(selectedDate);
+        selectedDateOnly.setHours(0, 0, 0, 0);
+        if (selectedDateOnly < today) {
+            setCreateError("Start committee date must be today or a future date.");
+            return;
+        }
+
+        const fineAmount = Number.parseFloat(createForm.fineAmount);
+        if (Number.isNaN(fineAmount) || fineAmount < 0) {
+            setCreateError("Please enter a valid fine amount (must be 0 or greater).");
+            return;
+        }
+
+        const extraDaysForFine = Number.parseInt(createForm.extraDaysForFine, 10);
+        if (Number.isNaN(extraDaysForFine) || extraDaysForFine < 0) {
+            setCreateError("Please enter a valid number of extra days for fine (must be 0 or greater).");
+            return;
+        }
+
         setIsCreating(true);
         setCreateError("");
         setIsCreateOpen(false);
@@ -104,6 +151,9 @@ export default function DashboardPage({ token, profile, onLogout }) {
             commissionMaxMember: maxMembers,
             committeeAmount: amount,
             noOfMonths: noOfMonths,
+            startCommitteeDate: startCommitteeDate,
+            fineAmount: fineAmount,
+            extraDaysForFine: extraDaysForFine,
         };
 
         createCommittee(token, payload)

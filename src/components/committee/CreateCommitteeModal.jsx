@@ -1,5 +1,6 @@
 import { Button } from "../ui/Button.jsx";
 import { Modal } from "../ui/Modal.jsx";
+import { DatePicker } from "../ui/DatePicker.jsx";
 
 export function CreateCommitteeModal({
     isOpen,
@@ -83,6 +84,44 @@ export function CreateCommitteeModal({
                         value={form.noOfMonths}
                         onChange={onChange}
                         placeholder="e.g. 12"
+                        required
+                    />
+                </label>
+                <DatePicker
+                    label="Start Committee Date"
+                    description="Select a date from today onwards"
+                    name="startCommitteeDate"
+                    value={form.startCommitteeDate}
+                    onChange={onChange}
+                    minDate={new Date().toISOString().split('T')[0]}
+                    placeholder="Select start date"
+                    required
+                    error={error && error.includes("date") ? error : undefined}
+                />
+                <label className="block text-sm font-medium text-white/80">
+                    Fine Amount
+                    <input
+                        className="mt-2 w-full rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                        name="fineAmount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={form.fineAmount}
+                        onChange={onChange}
+                        placeholder="e.g. 100"
+                        required
+                    />
+                </label>
+                <label className="block text-sm font-medium text-white/80">
+                    Extra Days For Fine
+                    <input
+                        className="mt-2 w-full rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                        name="extraDaysForFine"
+                        type="number"
+                        min="0"
+                        value={form.extraDaysForFine}
+                        onChange={onChange}
+                        placeholder="e.g. 5"
                         required
                     />
                 </label>
