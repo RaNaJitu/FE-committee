@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import DashboardPage from "./DashboardPage.jsx";
-import { getProfile, login, logout, registerUser, setUnauthorizedHandler } from "../services/apiClient.js";
+import { getProfile, login, logout, registerUser, setUnauthorizedHandler, forgotPassword } from "../services/apiClient.js";
 import { clearSession, loadSession, saveSession } from "../services/sessionStorage.js";
 import { normalizePassword } from "../utils/password.js";
 import { AuthCard } from "../components/auth/AuthCard.jsx";
 import { HeroSection } from "../components/auth/HeroSection.jsx";
 import { BackgroundArt } from "../components/auth/BackgroundArt.jsx";
+import { ForgotPasswordModal } from "../components/auth/ForgotPasswordModal.jsx";
 
 const initialLoginState = {
     phoneNo: "",
@@ -32,6 +33,9 @@ export default function LoginPage() {
     const [formError, setFormError] = useState("");
     const [signupError, setSignupError] = useState("");
     const [isRestoringSession, setIsRestoringSession] = useState(true);
+    const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+    const [isResettingPassword, setIsResettingPassword] = useState(false);
+    const [forgotPasswordError, setForgotPasswordError] = useState("");
     const [session, setSession] = useState({
         isAuthenticated: false,
         token: "",
@@ -121,6 +125,43 @@ export default function LoginPage() {
         setAuthMode(mode);
         setFormError("");
         setSignupError("");
+    };
+
+    const handleForgotPassword = () => {
+        setIsForgotPasswordOpen(true);
+    };
+
+    const handleForgotPasswordSubmit = async (data) => {
+        setIsResettingPassword(true);
+        setForgotPasswordError("");
+
+        // Note: The API requires a token, but for forgot password we might need a public token
+        // or the user might need to be logged in. For now, we'll try without token first
+        // and handle the error appropriately.
+        try {
+
+            await forgotPassword(data);
+            showToast({
+                title: "Password reset",
+                description: "Your password has been reset successfully. Please sign in with your new password.",
+                variant: "success",
+            });
+            setIsForgotPasswordOpen(false);
+            // Switch to login mode after successful reset
+            setAuthMode("login");
+        } catch (err) {
+            const message =
+                err.message ||
+                "Failed to reset password. Please verify your phone number and try again.";
+            setForgotPasswordError(message);
+            showToast({
+                title: "Password reset failed",
+                description: message,
+                variant: "error",
+            });
+        } finally {
+            setIsResettingPassword(false);
+        }
     };
 
     const handleSubmit = (event) => {
@@ -296,9 +337,22 @@ export default function LoginPage() {
                         signupError={signupError}
                         isLoginValid={isLoginValid}
                         isSignupValid={isSignupValid}
+                        onForgotPassword={handleForgotPassword}
                     />
                 </div>
             </div>
+
+            {/* Forgot Password Modal */}
+            <ForgotPasswordModal
+                isOpen={isForgotPasswordOpen}
+                onClose={() => {
+                    setIsForgotPasswordOpen(false);
+                    setForgotPasswordError("");
+                }}
+                onSubmit={handleForgotPasswordSubmit}
+                isSubmitting={isResettingPassword}
+                error={forgotPasswordError}
+            />
         </main>
     );
 }

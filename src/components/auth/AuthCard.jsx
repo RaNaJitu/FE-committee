@@ -22,6 +22,7 @@ export function AuthCard({
     signupError,
     isLoginValid,
     isSignupValid,
+    onForgotPassword,
 }) {
     const isLogin = authMode === "login";
 
@@ -89,6 +90,7 @@ export function AuthCard({
                             </label>
                             <button
                                 type="button"
+                                onClick={onForgotPassword}
                                 className="text-sm font-medium text-yellow-300 transition hover:text-yellow-200"
                             >
                                 Forgot password?

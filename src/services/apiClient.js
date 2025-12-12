@@ -206,3 +206,14 @@ export async function changePassword(token, data) {
         body: JSON.stringify(cleanData),
     });
 }
+
+export async function forgotPassword(data) {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
+    );
+
+    return request("api/v1/auth/forgot-password", {
+        method: "PATCH",
+        body: JSON.stringify(cleanData),
+    });
+}
