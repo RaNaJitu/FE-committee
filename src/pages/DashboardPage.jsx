@@ -211,6 +211,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
                     <>
                         <DashboardHeader
                             profile={profile}
+                            token={token}
                             onOpenMobileNav={() => setIsMobileNavOpen(true)}
                             onViewProfile={() => setActiveNav("profile")}
                             onLogout={onLogout}

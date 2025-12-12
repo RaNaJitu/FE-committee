@@ -1,9 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "../ui/Button.jsx";
+import { ChangePasswordModal } from "../auth/ChangePasswordModal.jsx";
+import { changePassword } from "../../services/apiClient.js";
+import { useToast } from "../../context/ToastContext.jsx";
 
-export function ProfileDropdown({ profile, onViewProfile, onLogout }) {
+export function ProfileDropdown({ profile, token, onViewProfile, onLogout }) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    const { showToast } = useToast();
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [changePasswordError, setChangePasswordError] = useState("");
 
     const profileData = profile?.data ?? profile;
     const name = profileData?.name ?? "User";
@@ -119,6 +127,21 @@ export function ProfileDropdown({ profile, onViewProfile, onLogout }) {
                             type="button"
                             onClick={() => {
                                 setIsOpen(false);
+                                setIsChangePasswordOpen(true);
+                            }}
+                            className="w-full rounded-lg px-3 py-2 text-left text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
+                        >
+                            <div className="flex items-center gap-2">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                </svg>
+                                Change Password
+                            </div>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsOpen(false);
                                 onLogout?.();
                             }}
                             className="w-full rounded-lg px-3 py-2 text-left text-sm text-rose-200 transition hover:bg-rose-500/10 hover:text-rose-100"
@@ -133,6 +156,53 @@ export function ProfileDropdown({ profile, onViewProfile, onLogout }) {
                     </div>
                 </div>
             )}
+
+            {/* Change Password Modal */}
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => {
+                    setIsChangePasswordOpen(false);
+                    setChangePasswordError("");
+                }}
+                onSubmit={async (data) => {
+                    if (!token) {
+                        setChangePasswordError("Authentication token is missing.");
+                        showToast({
+                            title: "Error",
+                            description: "Authentication token is missing.",
+                            variant: "error",
+                        });
+                        return;
+                    }
+
+                    setIsChangingPassword(true);
+                    setChangePasswordError("");
+
+                    try {
+                        await changePassword(token, data);
+                        showToast({
+                            title: "Password changed",
+                            description: "Your password has been updated successfully.",
+                            variant: "success",
+                        });
+                        setIsChangePasswordOpen(false);
+                    } catch (err) {
+                        const message =
+                            err.message ||
+                            "Failed to change password. Please check your current password and try again.";
+                        setChangePasswordError(message);
+                        showToast({
+                            title: "Password change failed",
+                            description: message,
+                            variant: "error",
+                        });
+                    } finally {
+                        setIsChangingPassword(false);
+                    }
+                }}
+                isSubmitting={isChangingPassword}
+                error={changePasswordError}
+            />
         </div>
     );
 }

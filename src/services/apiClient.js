@@ -192,3 +192,17 @@ export async function markUserDrawPaid(token, data) {
         body: JSON.stringify(cleanData),
     });
 }
+
+export async function changePassword(token, data) {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
+    );
+
+    return request("api/v1/auth/change-password", {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(cleanData),
+    });
+}

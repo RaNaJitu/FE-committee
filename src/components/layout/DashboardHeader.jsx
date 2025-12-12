@@ -1,7 +1,7 @@
 import { Button } from "../ui/Button.jsx";
 import { ProfileDropdown } from "./ProfileDropdown.jsx";
 
-export function DashboardHeader({ profile, onOpenMobileNav, onViewProfile, onLogout }) {
+export function DashboardHeader({ profile, token, onOpenMobileNav, onViewProfile, onLogout }) {
     return (
         <header className="flex flex-col gap-4 border-b border-white/10 bg-slate-950/70 px-6 py-8 backdrop-blur lg:flex-row lg:items-center lg:justify-between lg:px-12">
             <div className="flex items-start justify-between gap-4 w-full">
@@ -35,6 +35,7 @@ export function DashboardHeader({ profile, onOpenMobileNav, onViewProfile, onLog
                     </button>
                     <ProfileDropdown
                         profile={profile}
+                        token={token}
                         onViewProfile={onViewProfile}
                         onLogout={onLogout}
                     />
