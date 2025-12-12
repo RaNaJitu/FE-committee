@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "../ui/Button.jsx";
 import { Modal } from "../ui/Modal.jsx";
 import { SelectField } from "../ui/SelectField.jsx";
+import { InputField } from "../ui/InputField.jsx";
 import { getUserList } from "../../services/apiClient.js";
 
 export function AddCommitteeMemberModal({
@@ -138,17 +139,14 @@ export function AddCommitteeMemberModal({
                         placeholder="demo@gmail.com"
                     />
                 </label>
-                <label className="block text-sm font-medium text-white/80">
-                    Password (optional)
-                    <input
-                        className="mt-2 w-full rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
-                        name="password"
-                        type="password"
-                        value={form.password}
-                        onChange={onChange}
-                        placeholder="admin123"
-                    />
-                </label>
+                <InputField
+                    label="Password (optional)"
+                    name="password"
+                    type="password"
+                    value={form.password}
+                    onChange={onChange}
+                    placeholder="admin123"
+                />
                 {error && (
                     <p className="rounded-lg border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
                         {error}
