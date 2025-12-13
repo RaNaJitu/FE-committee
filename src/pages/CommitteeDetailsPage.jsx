@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { addCommitteeMember, getCommitteeDraws, updateDrawAmount } from "../services/apiClient.js";
 import { Button } from "../components/ui/Button.jsx";
@@ -75,11 +75,19 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
     const [editingDrawId, setEditingDrawId] = useState(null);
     const [editingAmount, setEditingAmount] = useState("");
     const [isUpdatingAmount, setIsUpdatingAmount] = useState(false);
+    const debounceTimerRef = useRef(null);
 
     useEffect(() => {
         if (committee?.id && token) {
             loadCommitteeDraws();
         }
+        
+        // Cleanup debounce timer on unmount
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
     }, [committee?.id, token]);
 
     const loadCommitteeDraws = () => {
@@ -131,10 +139,8 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
         setEditingAmount(currentAmount?.toString() || "");
     };
 
-    const handleDrawAmountBlur = async (draw) => {
-        if (!editingDrawId || editingDrawId !== draw.id) return;
-        
-        const newAmount = Number.parseFloat(editingAmount);
+    const saveDrawAmount = async (draw, amount) => {
+        const newAmount = Number.parseFloat(amount);
         const currentAmount = Number.parseFloat(
             draw?.committeeDrawsAmount ??
             draw?.committeeDrawAmount ??
@@ -142,16 +148,13 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
             0
         );
 
-        // If amount hasn't changed or is invalid, just reset
+        // If amount is invalid, don't save
         if (Number.isNaN(newAmount) || newAmount <= 0) {
-            setEditingDrawId(null);
-            setEditingAmount("");
             return;
         }
 
+        // If amount hasn't changed, don't save
         if (newAmount === currentAmount) {
-            setEditingDrawId(null);
-            setEditingAmount("");
             return;
         }
 
@@ -187,11 +190,61 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
         }
     };
 
+    const handleDrawAmountInputChange = (e, draw) => {
+        e.stopPropagation();
+        const newValue = e.target.value;
+        setEditingAmount(newValue);
+        
+        // Set editing mode if not already editing
+        if (editingDrawId !== draw.id) {
+            const currentAmount = 
+                draw?.committeeDrawsAmount ??
+                draw?.committeeDrawAmount ??
+                draw?.amount ??
+                "—";
+            setEditingDrawId(draw.id);
+            setEditingAmount(currentAmount?.toString() || "");
+        }
+        
+        // Clear existing timer
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        
+        // Set new timer to save after 4 seconds of inactivity
+        debounceTimerRef.current = setTimeout(() => {
+            saveDrawAmount(draw, newValue);
+        }, 2000);
+    };
+
+    const handleDrawAmountBlur = async (draw) => {
+        // Clear any pending debounce timer
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+            debounceTimerRef.current = null;
+        }
+        
+        // Save immediately on blur
+        if (editingDrawId === draw.id && editingAmount) {
+            await saveDrawAmount(draw, editingAmount);
+        }
+    };
+
     const handleDrawAmountKeyDown = (event, draw) => {
         if (event.key === "Enter") {
             event.preventDefault();
+            // Clear timer and save immediately
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+                debounceTimerRef.current = null;
+            }
             handleDrawAmountBlur(draw);
         } else if (event.key === "Escape") {
+            // Clear timer and cancel editing
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+                debounceTimerRef.current = null;
+            }
             setEditingDrawId(null);
             setEditingAmount("");
         }
@@ -419,6 +472,20 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
 
                                         const isEditing = editingDrawId === draw.id;
                                         const displayAmount = isEditing ? editingAmount : drawAmount;
+                                        
+                                        // Initialize editing amount if not set
+                                        const handleInputFocus = (e, draw) => {
+                                            e.stopPropagation();
+                                            if (editingDrawId !== draw.id) {
+                                                const currentAmount = 
+                                                    draw?.committeeDrawsAmount ??
+                                                    draw?.committeeDrawAmount ??
+                                                    draw?.amount ??
+                                                    "—";
+                                                setEditingDrawId(draw.id);
+                                                setEditingAmount(currentAmount?.toString() || "");
+                                            }
+                                        };
 
                                         return (
                                             <tr 
@@ -446,20 +513,14 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                                         min="0"
                                                         step="0.01"
                                                         value={displayAmount}
-                                                        onChange={(e) => {
-                                                            e.stopPropagation();
-                                                            setEditingAmount(e.target.value);
-                                                            if (!isEditing) {
-                                                                handleDrawAmountChange(draw.id, drawAmount);
-                                                            }
-                                                        }}
+                                                        onChange={(e) => handleDrawAmountInputChange(e, draw)}
                                                         onBlur={(e) => {
                                                             e.stopPropagation();
                                                             handleDrawAmountBlur(draw);
                                                         }}
                                                         onKeyDown={(e) => handleDrawAmountKeyDown(e, draw)}
                                                         onClick={(e) => e.stopPropagation()}
-                                                        onFocus={(e) => e.stopPropagation()}
+                                                        onFocus={(e) => handleInputFocus(e, draw)}
                                                         disabled={isUpdatingAmount}
                                                         placeholder="Amount"
                                                     />
