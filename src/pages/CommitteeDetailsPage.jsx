@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
-import { addCommitteeMember, getCommitteeDraws } from "../services/apiClient.js";
+import { addCommitteeMember, getCommitteeDraws, updateDrawAmount } from "../services/apiClient.js";
 import { Button } from "../components/ui/Button.jsx";
 import { StatusBadge } from "../components/committee/StatusBadge.jsx";
 import { AddCommitteeMemberModal } from "../components/committee/AddCommitteeMemberModal.jsx";
@@ -72,6 +72,9 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
     });
     const [isMemberSubmitting, setIsMemberSubmitting] = useState(false);
     const [memberError, setMemberError] = useState("");
+    const [editingDrawId, setEditingDrawId] = useState(null);
+    const [editingAmount, setEditingAmount] = useState("");
+    const [isUpdatingAmount, setIsUpdatingAmount] = useState(false);
 
     useEffect(() => {
         if (committee?.id && token) {
@@ -121,6 +124,79 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
     };
     const handleGetMemberList = () => {
         setIsGetMemberListModalOpen(true);
+    };
+
+    const handleDrawAmountChange = (drawId, currentAmount) => {
+        setEditingDrawId(drawId);
+        setEditingAmount(currentAmount?.toString() || "");
+    };
+
+    const handleDrawAmountBlur = async (draw) => {
+        if (!editingDrawId || editingDrawId !== draw.id) return;
+        
+        const newAmount = Number.parseFloat(editingAmount);
+        const currentAmount = Number.parseFloat(
+            draw?.committeeDrawsAmount ??
+            draw?.committeeDrawAmount ??
+            draw?.amount ??
+            0
+        );
+
+        // If amount hasn't changed or is invalid, just reset
+        if (Number.isNaN(newAmount) || newAmount <= 0) {
+            setEditingDrawId(null);
+            setEditingAmount("");
+            return;
+        }
+
+        if (newAmount === currentAmount) {
+            setEditingDrawId(null);
+            setEditingAmount("");
+            return;
+        }
+
+        // Update the amount
+        setIsUpdatingAmount(true);
+        try {
+            await updateDrawAmount(token, {
+                committeeId: committee.id,
+                drawId: draw.id,
+                amount: newAmount,
+            });
+            
+            showToast({
+                title: "Amount updated",
+                description: `Draw amount has been updated to ${newAmount}.`,
+                variant: "success",
+            });
+            
+            // Reload the draws list to get updated data
+            loadCommitteeDraws();
+        } catch (error) {
+            const message = error.message || "Failed to update draw amount.";
+            showToast({
+                title: "Update failed",
+                description: message,
+                variant: "error",
+            });
+            // Reset to original value on error
+            setEditingAmount(currentAmount.toString());
+        } finally {
+            setIsUpdatingAmount(false);
+            setEditingDrawId(null);
+        }
+    };
+
+    const handleDrawAmountKeyDown = (event, draw) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            handleDrawAmountBlur(draw);
+        } else if (event.key === "Escape") {
+            setEditingDrawId(null);
+            setEditingAmount("");
+        }
+        // Prevent row click when interacting with input
+        event.stopPropagation();
     };
 
     const handleDrawRowClick = (draw) => {
@@ -341,6 +417,9 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                             draw?.committeeDrawTime ?? draw?.drawTime ?? draw?.time,
                                         );
 
+                                        const isEditing = editingDrawId === draw.id;
+                                        const displayAmount = isEditing ? editingAmount : drawAmount;
+
                                         return (
                                             <tr 
                                                 key={draw.id ?? index} 
@@ -360,7 +439,30 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                                     {minAmount}
                                                 </td>
                                                 <td className="px-5 py-4 font-semibold text-white">
-                                                    {drawAmount}
+                                                    <input
+                                                        className="w-24 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        name="drawAmount"
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={displayAmount}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditingAmount(e.target.value);
+                                                            if (!isEditing) {
+                                                                handleDrawAmountChange(draw.id, drawAmount);
+                                                            }
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDrawAmountBlur(draw);
+                                                        }}
+                                                        onKeyDown={(e) => handleDrawAmountKeyDown(e, draw)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onFocus={(e) => e.stopPropagation()}
+                                                        disabled={isUpdatingAmount}
+                                                        placeholder="Amount"
+                                                    />
                                                 </td>
                                                 
                                             </tr>

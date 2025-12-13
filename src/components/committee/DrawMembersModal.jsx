@@ -65,27 +65,37 @@ export function DrawMembersModal({
     const [error, setError] = useState("");
     const [payingMemberId, setPayingMemberId] = useState(null);
 
+    const loadMembers = () => {
+        if (!committee?.id || !token || !draw?.id) {
+            setMembers([]);
+            setError("");
+            return;
+        }
+
+        setIsLoading(true);
+        setError("");
+        getPaidAmountDrawWise(token, committee.id, draw.id)
+            .then((response) => {
+                const membersList = Array.isArray(response?.data)
+                    ? response.data
+                    : Array.isArray(response)
+                        ? response
+                        : [];
+                        
+                setMembers(membersList);
+            })
+            .catch((err) => {
+                setError(err.message || "Failed to load committee members.");
+                setMembers([]);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    };
+
     useEffect(() => {
         if (isOpen && committee?.id && token && draw?.id) {
-            setIsLoading(true);
-            setError("");
-            getPaidAmountDrawWise(token, committee.id, draw.id)
-                .then((response) => {
-                    const membersList = Array.isArray(response?.data)
-                        ? response.data
-                        : Array.isArray(response)
-                            ? response
-                            : [];
-                            
-                    setMembers(membersList);
-                })
-                .catch((err) => {
-                    setError(err.message || "Failed to load committee members.");
-                    setMembers([]);
-                })
-                .finally(() => {
-                    setIsLoading(false);
-                });
+            loadMembers();
         } else {
             setMembers([]);
             setError("");
@@ -173,6 +183,8 @@ export function DrawMembersModal({
                 description: `Marked ₹${amount} as paid for ${member?.user?.name ?? "member"}.`,
                 variant: "success",
             });
+            // Reload members list to show updated paid amounts
+            loadMembers();
         } catch (requestError) {
             showToast({
                 title: "Payment failed",
@@ -252,28 +264,7 @@ export function DrawMembersModal({
                                     variant="secondary"
                                     size="md"
                                     className="mt-4"
-                                    onClick={() => {
-                                        if (committee?.id && token && draw?.id) {
-                                            setIsLoading(true);
-                                            setError("");
-                                            getPaidAmountDrawWise(token, committee.id, draw.id)
-                                                .then((response) => {
-                                                    const membersList = Array.isArray(response?.data)
-                                                        ? response.data
-                                                        : Array.isArray(response)
-                                                            ? response
-                                                            : [];
-                                                        
-                                                    setMembers(membersList);
-                                                })
-                                                .catch((err) => {
-                                                    setError(err.message || "Failed to load committee members.");
-                                                })
-                                                .finally(() => {
-                                                    setIsLoading(false);
-                                                });
-                                        }
-                                    }}
+                                    onClick={loadMembers}
                                 >
                                     Retry
                                 </Button>

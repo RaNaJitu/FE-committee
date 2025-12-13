@@ -217,3 +217,17 @@ export async function forgotPassword(data) {
         body: JSON.stringify(cleanData),
     });
 }
+
+export async function updateDrawAmount(token, data) {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
+    );
+
+    return request("api/v1/committee/draw/amount-update", {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(cleanData),
+    });
+}
