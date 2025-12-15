@@ -467,12 +467,32 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                             draw?.minAmount ??
                                             draw?.minimumAmount ??
                                             "—";
-                                        const formattedDate = formatDrawDate(
-                                            draw?.committeeDrawDate ?? draw?.drawDate ?? draw?.date,
-                                        );
-                                        const formattedTime = formatDrawTime(
-                                            draw?.committeeDrawTime ?? draw?.drawTime ?? draw?.time,
-                                        );
+                                        const rawDate = draw?.committeeDrawDate ?? draw?.drawDate ?? draw?.date;
+                                        const rawTime = draw?.committeeDrawTime ?? draw?.drawTime ?? draw?.time;
+                                        const formattedDate = formatDrawDate(rawDate);
+                                        const formattedTime = formatDrawTime(rawTime);
+
+                                        // Determine if the current time is after the draw's scheduled date & time
+                                        let canOpenTimer = false;
+                                        if (rawDate) {
+                                            const startDate = new Date(rawDate);
+                                            if (!Number.isNaN(startDate.getTime())) {
+                                                if (rawTime && typeof rawTime === "string") {
+                                                    const match = /^(\d{1,2}):?(\d{2})?:?(\d{2})?/.exec(rawTime);
+                                                    if (match) {
+                                                        const [, h, m, s] = match;
+                                                        startDate.setHours(
+                                                            Number.parseInt(h ?? "0", 10),
+                                                            Number.parseInt(m ?? "0", 10),
+                                                            Number.parseInt(s ?? "0", 10),
+                                                            0,
+                                                        );
+                                                    }
+                                                }
+                                                const now = new Date();
+                                                canOpenTimer = now >= startDate;
+                                            }
+                                        }
 
                                         const isEditing = editingDrawId === draw.id;
                                         const displayAmount = isEditing ? editingAmount : drawAmount;
@@ -530,17 +550,23 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                                     />
                                                 </td>
                                                 <td className="px-5 py-4 text-center">
-                                                    <Button
-                                                        variant="secondary"
-                                                        size="md"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setTimerDraw(draw);
-                                                            setIsTimerModalOpen(true);
-                                                        }}
-                                                    >
-                                                        Open Timer
-                                                    </Button>
+                                                    {canOpenTimer ? (
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="md"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setTimerDraw(draw);
+                                                                setIsTimerModalOpen(true);
+                                                            }}
+                                                        >
+                                                            Open Timer
+                                                        </Button>
+                                                    ) : (
+                                                        <span className="text-xs font-medium text-white/40 italic">
+                                                            Draw not started yet
+                                                        </span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
