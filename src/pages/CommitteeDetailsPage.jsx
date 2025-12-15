@@ -6,6 +6,7 @@ import { StatusBadge } from "../components/committee/StatusBadge.jsx";
 import { AddCommitteeMemberModal } from "../components/committee/AddCommitteeMemberModal.jsx";
 import { CommitteeMembersModal } from "../components/committee/CommitteeMembersModal.jsx";
 import { DrawMembersModal } from "../components/committee/DrawMembersModal.jsx";
+import { DrawTimerModal } from "../components/committee/DrawTimerModal.jsx";
 
 const formatDrawDate = (value) => {
     if (!value) return "—";
@@ -75,6 +76,8 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
     const [editingDrawId, setEditingDrawId] = useState(null);
     const [editingAmount, setEditingAmount] = useState("");
     const [isUpdatingAmount, setIsUpdatingAmount] = useState(false);
+    const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
+    const [timerDraw, setTimerDraw] = useState(null);
     const debounceTimerRef = useRef(null);
 
     useEffect(() => {
@@ -449,6 +452,7 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                         <th className="px-5 py-3 font-semibold">Draw Time</th>
                                         <th className="px-5 py-3 font-semibold">Min Amount</th>
                                         <th className="px-5 py-3 font-semibold">Draw Amount</th>
+                                        <th className="px-5 py-3 font-semibold text-center">Timer</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
@@ -525,7 +529,19 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                                         placeholder="Amount"
                                                     />
                                                 </td>
-                                                
+                                                <td className="px-5 py-4 text-center">
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="md"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setTimerDraw(draw);
+                                                            setIsTimerModalOpen(true);
+                                                        }}
+                                                    >
+                                                        Open Timer
+                                                    </Button>
+                                                </td>
                                             </tr>
                                         );
                                     })}
@@ -575,6 +591,15 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                 draw={selectedDraw}
                 token={token}
                 committee={committee}
+            />
+            <DrawTimerModal
+                isOpen={isTimerModalOpen}
+                onClose={() => {
+                    setIsTimerModalOpen(false);
+                    setTimerDraw(null);
+                }}
+                draw={timerDraw}
+                committeeName={committeeName}
             />
         </div>
     );
