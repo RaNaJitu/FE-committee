@@ -3,7 +3,7 @@ import { ProfileDropdown } from "./ProfileDropdown.jsx";
 
 export function DashboardHeader({ profile, token, onOpenMobileNav, onViewProfile, onLogout }) {
     return (
-        <header className="flex flex-col gap-4 border-b border-white/10 bg-slate-950/70 px-6 py-8 backdrop-blur lg:flex-row lg:items-center lg:justify-between lg:px-12">
+        <header className="fixed top-0 right-0 left-0 xl:left-72 z-50 flex flex-col gap-4 border-b border-white/10 bg-slate-950/70 px-6 py-8 backdrop-blur lg:flex-row lg:items-center lg:justify-between lg:px-12">
             <div className="flex items-start justify-between gap-4 w-full">
                 <div className="flex-1">
                     {/* <p className="text-sm uppercase tracking-wider text-yellow-300">

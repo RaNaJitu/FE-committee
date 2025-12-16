@@ -2,7 +2,7 @@ import { navigation } from "../../constants/navigation.js";
 
 export function Sidebar({ activeNav, onSelectNav }) {
     return (
-        <aside className="hidden w-72 flex-col border-r border-white/10 bg-slate-950/70 px-6 py-8 backdrop-blur xl:flex">
+        <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-72 flex-col border-r border-white/10 bg-slate-950/70 px-6 py-8 backdrop-blur xl:flex">
             <div className="mb-10">
                 <a href="#home" className="text-2xl font-semibold text-white">
                     Committees<span className="text-yellow-300">Board</span>

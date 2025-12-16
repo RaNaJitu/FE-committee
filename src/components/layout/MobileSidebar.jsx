@@ -18,7 +18,7 @@ export function MobileSidebar({ isOpen, onClose, activeNav, onSelectNav }) {
                 </button>
                 <div className="mb-10 mt-6">
                     <a href="#home" className="text-2xl font-semibold text-white">
-                        Aurora<span className="text-yellow-300">Board</span>
+                        Committees<span className="text-yellow-300">Board</span>
                     </a>
                     <p className="mt-2 text-sm text-white/50">
                         Committees command center

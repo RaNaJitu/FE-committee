@@ -200,7 +200,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
                     setIsMobileNavOpen(false);
                 }}
             />
-            <main className="flex-1 overflow-hidden">
+            <main className="flex-1 overflow-hidden xl:ml-72">
                 {activeNav === "profile" ? (
                     <ProfilePage
                         token={token}
@@ -216,7 +216,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
                             onViewProfile={() => setActiveNav("profile")}
                             onLogout={onLogout}
                         />
-                        <div className="px-6 py-8 lg:px-12">
+                        <div className="pt-32 px-6 py-8 lg:px-12">
                             {selectedCommittee ? (
                                 <CommitteeDetailsPage
                                     committee={selectedCommittee}
