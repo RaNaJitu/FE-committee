@@ -57,6 +57,7 @@ export function DrawMembersModal({
     draw,
     committee,
     token,
+    profile,
 }) {
     
     const { showToast } = useToast();
@@ -64,6 +65,8 @@ export function DrawMembersModal({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [payingMemberId, setPayingMemberId] = useState(null);
+    const userRole = profile?.data?.role ?? profile?.role ?? "";
+    const isAdmin = userRole === "ADMIN";
 
     const loadMembers = () => {
         if (!committee?.id || !token || !draw?.id) {
@@ -172,15 +175,17 @@ export function DrawMembersModal({
         setPayingMemberId(userId);
         try {
           
-            await markUserDrawPaid(token, {
+            const response = await markUserDrawPaid(token, {
                 committeeId: committee.id,
                 userId,
                 drawId,
                 userDrawAmountPaid: amount,
             });
+            
             showToast({
                 title: "Payment recorded",
-                description: `Marked ₹${amount} as paid for ${member?.user?.name ?? "member"}.`,
+                // description: `Marked ₹${amount} as paid for ${member?.user?.name ?? "member"}.`,
+                description: response?.message || "Payment recorded successfully.",
                 variant: "success",
             });
             // Reload members list to show updated paid amounts
@@ -232,7 +237,7 @@ export function DrawMembersModal({
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold uppercase tracking-wide text-white/50">
-                                    Min Amount
+                                    Max Amount
                                 </label>
                                 <p className="text-sm text-white/90 font-medium">{minAmount}</p>
                             </div>
@@ -284,7 +289,10 @@ export function DrawMembersModal({
                                                 <th className="px-5 py-3 font-semibold">Paid Amount</th>
                                                 <th className="px-5 py-3 font-semibold">Final Amount</th>
                                                 <th className="px-5 py-3 font-semibold">Total Paid Amount</th>
-                                                <th className="px-5 py-3 font-semibold text-right">Action</th>
+                                                {isAdmin && (
+                                                    <th className="px-5 py-3 font-semibold text-right">Action</th>
+                                                )}
+                                                
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
@@ -315,7 +323,8 @@ export function DrawMembersModal({
                                                         <td className="px-5 py-4">
                                                             {(Number(member?.user?.userDrawAmountPaid) || 0) + (Number(member?.user?.fineAmountPaid) || 0)}
                                                         </td>
-                                                        <td className="px-5 py-4 text-right">
+                                                        {isAdmin && (
+                                                            <td className="px-5 py-4 text-right">
                                                             <Button
                                                                 variant="secondary"
                                                                 size="sm"
@@ -327,6 +336,8 @@ export function DrawMembersModal({
                                                                     : "Mark Paid"}
                                                             </Button>
                                                         </td>
+                                                        )}
+                                                        
                                                     </tr>
                                                 );
                                             })}

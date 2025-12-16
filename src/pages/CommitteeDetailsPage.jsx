@@ -55,7 +55,7 @@ const formatDrawTime = (value) => {
     return `${hour}${minuteStr}${period}`;
 };
 
-export default function CommitteeDetailsPage({ committee, token, onBack, onRefresh }) {
+export default function CommitteeDetailsPage({ committee, token, profile, onBack, onRefresh }) {
     const { showToast } = useToast();
     const [committeeDrawsList, setCommitteeDrawsList] = useState([]);
     const [isLoadingDraws, setIsLoadingDraws] = useState(false);
@@ -334,6 +334,8 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
         ? new Date(committee.createdAt).toLocaleString()
         : "—";
     const statusLabel = committee.committeeStatus ?? committee.status ?? committee.state ?? "INACTIVE";
+    const userRole = profile?.data?.role ?? profile?.role ?? "";
+    const isAdmin = userRole === "ADMIN";
 
     return (
         <div className="text-white px-4 py-6 sm:px-6 lg:px-12">
@@ -450,9 +452,11 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                         <th className="px-5 py-3 font-semibold">S.No</th>
                                         <th className="px-5 py-3 font-semibold">Draw Date</th>
                                         <th className="px-5 py-3 font-semibold">Draw Time</th>
-                                        <th className="px-5 py-3 font-semibold">Min Amount</th>
+                                        <th className="px-5 py-3 font-semibold">Max Amount</th>
                                         <th className="px-5 py-3 font-semibold">Draw Amount</th>
-                                        <th className="px-5 py-3 font-semibold text-center">Timer</th>
+                                        {isAdmin && (
+                                            <th className="px-5 py-3 font-semibold text-center">Timer</th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
@@ -529,45 +533,53 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                                                 <td className="px-5 py-4">
                                                     {minAmount}
                                                 </td>
-                                                <td className="px-5 py-4 font-semibold text-white">
-                                                    <input
-                                                        className="w-24 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        name="drawAmount"
-                                                        type="number"
-                                                        min="0"
-                                                        step="0.01"
-                                                        value={displayAmount}
-                                                        onChange={(e) => handleDrawAmountInputChange(e, draw)}
-                                                        onBlur={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDrawAmountBlur(draw);
-                                                        }}
-                                                        onKeyDown={(e) => handleDrawAmountKeyDown(e, draw)}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        onFocus={(e) => handleInputFocus(e, draw)}
-                                                        disabled={isUpdatingAmount}
-                                                        placeholder="Amount"
-                                                    />
-                                                </td>
-                                                <td className="px-5 py-4 text-center">
-                                                    {canOpenTimer ? (
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="md"
-                                                            onClick={(e) => {
+                                                {isAdmin ? (
+                                                    <td className="px-5 py-4 font-semibold text-white">
+                                                        <input
+                                                            className="w-24 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            name="drawAmount"
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.01"
+                                                            value={displayAmount}
+                                                            onChange={(e) => handleDrawAmountInputChange(e, draw)}
+                                                            onBlur={(e) => {
                                                                 e.stopPropagation();
-                                                                setTimerDraw(draw);
-                                                                setIsTimerModalOpen(true);
+                                                                handleDrawAmountBlur(draw);
                                                             }}
-                                                        >
-                                                            Open Timer
-                                                        </Button>
-                                                    ) : (
-                                                        <span className="text-xs font-medium text-white/40 italic">
-                                                            Draw not started yet
-                                                        </span>
-                                                    )}
-                                                </td>
+                                                            onKeyDown={(e) => handleDrawAmountKeyDown(e, draw)}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            onFocus={(e) => handleInputFocus(e, draw)}
+                                                            disabled={isUpdatingAmount}
+                                                            placeholder="Amount"
+                                                        />
+                                                    </td>
+                                                ) : (
+                                                    <td className="px-5 py-4 font-semibold text-white">
+                                                        {drawAmount}
+                                                    </td>
+                                                )}
+                                                {isAdmin && (
+                                                    <td className="px-5 py-4 text-center">
+                                                        {canOpenTimer ? (
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="md"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setTimerDraw(draw);
+                                                                    setIsTimerModalOpen(true);
+                                                                }}
+                                                            >
+                                                                Open Timer
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="text-xs font-medium text-white/40 italic">
+                                                                Draw not started yet
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                )}
                                             </tr>
                                         );
                                     })}
@@ -617,6 +629,7 @@ export default function CommitteeDetailsPage({ committee, token, onBack, onRefre
                 draw={selectedDraw}
                 token={token}
                 committee={committee}
+                profile={profile}
             />
             <DrawTimerModal
                 isOpen={isTimerModalOpen}

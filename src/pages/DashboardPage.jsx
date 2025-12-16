@@ -221,6 +221,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
                                 <CommitteeDetailsPage
                                     committee={selectedCommittee}
                                     token={token}
+                                    profile={profile}
                                     onBack={() => setSelectedCommittee(null)}
                                     onRefresh={refresh}
                                 />
