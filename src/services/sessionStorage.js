@@ -9,7 +9,9 @@ export function saveSession({ token, profile }) {
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (error) {
-        console.error("Failed to save session:", error);
+        if (import.meta.env.DEV) {
+            console.error("Failed to save session:", error);
+        }
     }
 }
 
@@ -24,7 +26,9 @@ export function loadSession() {
             profile: parsed.profile || null,
         };
     } catch (error) {
-        console.error("Failed to load session:", error);
+        if (import.meta.env.DEV) {
+            console.error("Failed to load session:", error);
+        }
         return null;
     }
 }
@@ -33,7 +37,9 @@ export function clearSession() {
     try {
         localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-        console.error("Failed to clear session:", error);
+        if (import.meta.env.DEV) {
+            console.error("Failed to clear session:", error);
+        }
     }
 }
 

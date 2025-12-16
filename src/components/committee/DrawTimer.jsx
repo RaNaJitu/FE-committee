@@ -4,7 +4,6 @@ import { Button } from "../ui/Button.jsx";
 export function DrawTimer({ initialSeconds }) {
     const [timeLeft, setTimeLeft] = useState(initialSeconds);
     const [isRunning, setIsRunning] = useState(false);
-    console.log("timeLeft ==>", timeLeft);
     // Derived minutes and seconds for display
     const { minutes, seconds } = useMemo(() => {
         const mins = Math.floor(timeLeft / 60);

@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 const VARIANTS = {
     primary:
         "bg-yellow-500 text-slate-900 shadow-lg shadow-yellow-500/25 hover:bg-yellow-400 focus-visible:outline-yellow-300",
@@ -12,6 +14,18 @@ const SIZES = {
     lg: "px-5 py-3 text-base",
 };
 
+/**
+ * Button component with multiple variants and sizes
+ * @param {Object} props - Component props
+ * @param {string} props.type - Button type (button, submit, reset)
+ * @param {string} props.variant - Visual variant (primary, secondary, ghost)
+ * @param {string} props.size - Button size (md, lg)
+ * @param {string} props.className - Additional CSS classes
+ * @param {boolean} props.isLoading - Shows loading spinner when true
+ * @param {React.ReactNode} props.icon - Icon to display before text
+ * @param {React.ReactNode} props.children - Button content
+ * @returns {JSX.Element} Button element
+ */
 export function Button({
     type = "button",
     variant = "primary",
@@ -47,4 +61,15 @@ export function Button({
 function classNames(...values) {
     return values.filter(Boolean).join(" ");
 }
+
+Button.propTypes = {
+    type: PropTypes.oneOf(["button", "submit", "reset"]),
+    variant: PropTypes.oneOf(["primary", "secondary", "ghost"]),
+    size: PropTypes.oneOf(["md", "lg"]),
+    className: PropTypes.string,
+    isLoading: PropTypes.bool,
+    icon: PropTypes.node,
+    children: PropTypes.node.isRequired,
+    disabled: PropTypes.bool,
+};
 

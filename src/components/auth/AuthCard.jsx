@@ -30,7 +30,7 @@ export function AuthCard({
         <Card className="w-full max-w-md">
             <CardHeader>
                 <div className="flex items-center justify-between gap-3">
-                    <CardTitle>{isLogin ? "Sign in to your account" : "Create an account"}</CardTitle>
+                    <CardTitle>{isLogin ? "login your account" : "Create an account"}</CardTitle>
                     <div className="rounded-full border border-white/10 bg-white/5 p-1 text-xs font-semibold uppercase tracking-wide text-white/70">
                         <button
                             type="button"

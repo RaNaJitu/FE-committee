@@ -1,5 +1,26 @@
-const DEFAULT_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL ?? "http://10.255.253.32:4000";
+import { API_ENDPOINTS, API_TIMEOUT } from "../constants/api.js";
+
+// Get API base URL from environment variable
+// In production, this MUST be set - fail fast if missing
+const getApiBaseUrl = () => {
+    const envUrl = import.meta.env.VITE_API_BASE_URL;
+    
+    if (import.meta.env.PROD && !envUrl) {
+        throw new Error(
+            "VITE_API_BASE_URL environment variable is required in production. " +
+            "Please set it in your production environment."
+        );
+    }
+    
+    // Development fallback (only in dev mode)
+    return envUrl ?? "http://10.255.253.32:4000";
+};
+
+const DEFAULT_BASE_URL = getApiBaseUrl();
+const DEFAULT_TIMEOUT = API_TIMEOUT;
+
+// Re-export for convenience
+const API = API_ENDPOINTS;
 
 let onUnauthorizedCallback = null;
 
@@ -13,7 +34,16 @@ function getBaseUrl() {
 
 async function request(path, options = {}) {
     const url = `${getBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+    const timeout = options.timeout ?? DEFAULT_TIMEOUT;
+    const abortController = options.signal ? null : new AbortController();
+    const signal = options.signal ?? abortController.signal;
 
+    // Set up timeout
+    const timeoutId = setTimeout(() => {
+        if (abortController) {
+            abortController.abort();
+        }
+    }, timeout);
 
     const config = {
         method: options.method || "GET",
@@ -22,36 +52,47 @@ async function request(path, options = {}) {
             ...(options.headers ?? {}),
         },
         ...(options.body ? { body: options.body } : {}),
+        signal,
     };
     
-    
-    const response = await fetch(url, config);
+    try {
+        const response = await fetch(url, config);
+        clearTimeout(timeoutId);
 
-    const contentType = response.headers.get("content-type");
-    const isJson = contentType?.includes("application/json");
-    const payload = isJson ? await response.json() : await response.text();
+        const contentType = response.headers.get("content-type");
+        const isJson = contentType?.includes("application/json");
+        const payload = isJson ? await response.json() : await response.text();
 
-    if (!response.ok) {
-        // Handle token expiration (401 Unauthorized or 403 Forbidden)
-        if ((response.status === 401 || response.status === 403) && onUnauthorizedCallback) {
-            onUnauthorizedCallback();
+        if (!response.ok) {
+            // Handle token expiration (401 Unauthorized or 403 Forbidden)
+            if ((response.status === 401 || response.status === 403) && onUnauthorizedCallback) {
+                onUnauthorizedCallback();
+            }
+            
+            const message =
+                (isJson && (payload.message || payload.error)) ||
+                (typeof payload === "string" && payload) ||
+                "Unexpected error";
+            const error = new Error(message);
+            error.status = response.status;
+            error.payload = payload;
+            throw error;
         }
-        
-        const message =
-            (isJson && (payload.message || payload.error)) ||
-            (typeof payload === "string" && payload) ||
-            "Unexpected error";
-        const error = new Error(message);
-        error.status = response.status;
-        error.payload = payload;
+
+        return payload;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === "AbortError") {
+            const timeoutError = new Error(`Request timeout after ${timeout}ms`);
+            timeoutError.name = "TimeoutError";
+            throw timeoutError;
+        }
         throw error;
     }
-
-    return payload;
 }
 
 export async function login({ phoneNo, password }) {
-    const result = await request("api/v1/auth/login", {
+    const result = await request(API.AUTH.LOGIN, {
         method: "POST",
         body: JSON.stringify({ phoneNo, password }),
     });
@@ -70,7 +111,7 @@ export async function login({ phoneNo, password }) {
 }
 
 export async function getProfile(token) {
-    return request("api/v1/auth/profile/me", {
+    return request(API_ENDPOINTS.AUTH.PROFILE, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -79,7 +120,7 @@ export async function getProfile(token) {
 }
 
 export async function getCommittees(token) {
-    return request("api/v1/committee/get", {
+    return request(API_ENDPOINTS.COMMITTEE.LIST, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -95,7 +136,7 @@ export async function createCommittee(token, data) {
     
     const bodyString = JSON.stringify(cleanData);
     
-    return request("api/v1/committee/add", {
+    return request(API.COMMITTEE.CREATE, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -105,7 +146,7 @@ export async function createCommittee(token, data) {
 }
 
 export async function logout(token) {
-    return request("api/v1/auth/logout", {
+    return request(API_ENDPOINTS.AUTH.LOGOUT, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -119,7 +160,7 @@ export async function addCommitteeMember(token, data) {
         Object.entries(data).filter(([_, value]) => value !== undefined && value !== ""),
     );
 
-    return request("api/v1/committee/member/add", {
+    return request(API.COMMITTEE.MEMBER.ADD, {
         method: "POST",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -133,14 +174,14 @@ export async function registerUser(data) {
         Object.entries(data).filter(([_, value]) => value !== undefined && value !== ""),
     );
 
-    return request("api/v1/auth/register", {
+    return request(API.AUTH.REGISTER, {
         method: "POST",
         body: JSON.stringify(cleanData),
     });
 }
 
 export async function getCommitteeMembers(token, committeeId) {
-    return request(`api/v1/committee/member/get?committeeId=${committeeId}`, {
+    return request(`${API.COMMITTEE.MEMBER.GET}?committeeId=${committeeId}`, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -148,8 +189,8 @@ export async function getCommitteeMembers(token, committeeId) {
     });
 }
 
-export async function getPaidAmountDrawWise(token, committeeId, drawId = null) {
-    let url = `api/v1/committee/draw/user-wise-paid?committeeId=${committeeId}`;
+export async function getPaidAmountDrawWise(token, committeeId, drawId = null, options = {}) {
+    let url = `${API.COMMITTEE.DRAW.USER_WISE_PAID}?committeeId=${committeeId}`;
     if (drawId) {
         url += `&drawId=${drawId}`;
     }
@@ -158,11 +199,12 @@ export async function getPaidAmountDrawWise(token, committeeId, drawId = null) {
         headers: {
             Authorization: `Bearer ${token}`,
         },
+        ...options,
     });
 }
 
 export async function getUserList(token) {
-    return request("api/v1/auth/user-list", {
+    return request(API.AUTH.USER_LIST, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -171,7 +213,7 @@ export async function getUserList(token) {
 }
 
 export async function getCommitteeDraws(token, committeeId) {
-    return request(`api/v1/committee/draw/get?committeeId=${committeeId}`, {
+    return request(`${API.COMMITTEE.DRAW.GET}?committeeId=${committeeId}`, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -184,7 +226,7 @@ export async function markUserDrawPaid(token, data) {
         Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
     );
 
-    return request("api/v1/committee/draw/user-wise-paid", {
+    return request(API.COMMITTEE.DRAW.USER_WISE_PAID, {
         method: "PATCH",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -198,7 +240,7 @@ export async function changePassword(token, data) {
         Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
     );
 
-    return request("api/v1/auth/change-password", {
+    return request(API.AUTH.CHANGE_PASSWORD, {
         method: "PATCH",
         headers: {
             Authorization: `Bearer ${token}`,
@@ -212,7 +254,7 @@ export async function forgotPassword(data) {
         Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
     );
 
-    return request("api/v1/auth/forgot-password", {
+    return request(API.AUTH.FORGOT_PASSWORD, {
         method: "PATCH",
         body: JSON.stringify(cleanData),
     });
@@ -223,7 +265,7 @@ export async function updateDrawAmount(token, data) {
         Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
     );
 
-    return request("api/v1/committee/draw/amount-update", {
+    return request(API.COMMITTEE.DRAW.AMOUNT_UPDATE, {
         method: "PATCH",
         headers: {
             Authorization: `Bearer ${token}`,

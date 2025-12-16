@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Modal } from "../ui/Modal.jsx";
 import { Button } from "../ui/Button.jsx";
 import { getCommitteeMembers, getPaidAmountDrawWise, markUserDrawPaid } from "../../services/apiClient.js";
@@ -67,6 +67,7 @@ export function DrawMembersModal({
     const [payingMemberId, setPayingMemberId] = useState(null);
     const userRole = profile?.data?.role ?? profile?.role ?? "";
     const isAdmin = userRole === "ADMIN";
+    const abortControllerRef = useRef(null);
 
     const loadMembers = () => {
         if (!committee?.id || !token || !draw?.id) {
@@ -75,10 +76,22 @@ export function DrawMembersModal({
             return;
         }
 
+        // Cancel any pending request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new AbortController for this request
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
+
         setIsLoading(true);
         setError("");
-        getPaidAmountDrawWise(token, committee.id, draw.id)
+        getPaidAmountDrawWise(token, committee.id, draw.id, { signal })
             .then((response) => {
+                // Check if request was aborted
+                if (signal.aborted) return;
+
                 const membersList = Array.isArray(response?.data)
                     ? response.data
                     : Array.isArray(response)
@@ -88,11 +101,16 @@ export function DrawMembersModal({
                 setMembers(membersList);
             })
             .catch((err) => {
+                // Don't set error if request was aborted
+                if (signal.aborted || err.name === "AbortError") return;
+
                 setError(err.message || "Failed to load committee members.");
                 setMembers([]);
             })
             .finally(() => {
-                setIsLoading(false);
+                if (!signal.aborted) {
+                    setIsLoading(false);
+                }
             });
     };
 
@@ -103,6 +121,13 @@ export function DrawMembersModal({
             setMembers([]);
             setError("");
         }
+
+        // Cleanup: abort request on unmount or when dependencies change
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
     }, [isOpen, committee?.id, token, draw?.id]);
 
     const committeeName = committee?.committeeName ?? committee?.title ?? committee?.name ?? "Committee";

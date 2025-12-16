@@ -13,7 +13,7 @@ export function CommitteeTable({
     canCreate = false,
 }) {
     return (
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30">
+        <section className="rounded-3xl mt-16 border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-lg font-semibold text-white">Committees</h2>

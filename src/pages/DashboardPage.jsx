@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useCommittees } from "../hooks/useCommittees.js";
 import { useToast } from "../context/ToastContext.jsx";
-import { createCommittee } from "../services/apiClient.js";
+import { createCommittee, getCommittees } from "../services/apiClient.js";
 import { Sidebar } from "../components/layout/Sidebar.jsx";
 import { MobileSidebar } from "../components/layout/MobileSidebar.jsx";
 import { DashboardHeader } from "../components/layout/DashboardHeader.jsx";
@@ -14,8 +15,18 @@ import { navigation } from "../constants/navigation.js";
 
 export default function DashboardPage({ token, profile, onLogout }) {
     const { showToast } = useToast();
-    const [activeNav, setActiveNav] = useState("committees");
+    const navigate = useNavigate();
+    const location = useLocation();
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+    
+    // Get active nav from URL path
+    const activeNav = location.pathname.includes("/profile")
+        ? "profile"
+        : location.pathname.includes("/calendar")
+        ? "calendar"
+        : location.pathname.includes("/committee/")
+        ? "committees"
+        : "committees";
     const {
         committees,
         meta,
@@ -37,7 +48,6 @@ export default function DashboardPage({ token, profile, onLogout }) {
     });
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState("");
-    const [selectedCommittee, setSelectedCommittee] = useState(null);
 
     useEffect(() => {
         if (isError && error) {
@@ -187,74 +197,94 @@ export default function DashboardPage({ token, profile, onLogout }) {
 
     return (
         <div className="flex min-h-screen bg-slate-950 text-white">
-            <Sidebar
-                activeNav={activeNav}
-                onSelectNav={setActiveNav}
-            />
+            <Sidebar activeNav={activeNav} />
             <MobileSidebar
                 isOpen={isMobileNavOpen}
                 onClose={() => setIsMobileNavOpen(false)}
                 activeNav={activeNav}
-                onSelectNav={(nav) => {
-                    setActiveNav(nav);
-                    setIsMobileNavOpen(false);
-                }}
             />
             <main className="flex-1 overflow-hidden xl:ml-72">
-                {activeNav === "profile" ? (
-                    <ProfilePage
-                        token={token}
-                        profile={profile}
-                        onBack={() => setActiveNav("committees")}
+                <Routes>
+                    <Route
+                        path="profile"
+                        element={
+                            <ProfilePage
+                                token={token}
+                                profile={profile}
+                                onBack={() => navigate("/dashboard")}
+                            />
+                        }
                     />
-                ) : (
-                    <>
-                        <DashboardHeader
-                            profile={profile}
-                            token={token}
-                            onOpenMobileNav={() => setIsMobileNavOpen(true)}
-                            onViewProfile={() => setActiveNav("profile")}
-                            onLogout={onLogout}
-                        />
-                        <div className="pt-32 px-6 py-8 lg:px-12">
-                            {selectedCommittee ? (
-                                <CommitteeDetailsPage
-                                    committee={selectedCommittee}
-                                    token={token}
+                    <Route
+                        path="committee/:committeeId"
+                        element={<CommitteeDetailsRoute token={token} profile={profile} onRefresh={refresh} />}
+                    />
+                    <Route
+                        path="calendar"
+                        element={
+                            <>
+                                <DashboardHeader
                                     profile={profile}
-                                    onBack={() => setSelectedCommittee(null)}
-                                    onRefresh={refresh}
+                                    token={token}
+                                    onOpenMobileNav={() => setIsMobileNavOpen(true)}
+                                    onViewProfile={() => navigate("/dashboard/profile")}
+                                    onLogout={onLogout}
                                 />
-                            ) : (
-                                <>
-                                    {activeNav === "committees" && (
-                                        <CommitteeTable
-                                            committees={committees}
-                                            meta={meta}
-                                            isLoading={isLoading}
-                                            isError={isError}
-                                            error={error}
-                                            onRefresh={refresh}
-                                            onCreate={() => setIsCreateOpen(true)}
-                                            canCreate={profile?.data?.role === "ADMIN"}
-                                            onViewCommittee={(committee) => {
-                                                setSelectedCommittee(committee);
-                                            }}
-                                        />
-                                    )}
-                                    {activeNav === "calendar" && <CalendarPage />}
-                                    {activeNav !== "committees" && activeNav !== "profile" && activeNav !== "calendar" && (
-                                        <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
-                                            <p className="text-white/60">
-                                                {navigation.find((nav) => nav.id === activeNav)?.label ?? "This section"} is coming soon.
-                                            </p>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </>
-                )}
+                                <div className="pt-32 px-6 py-8 lg:px-12">
+                                    <CalendarPage />
+                                </div>
+                            </>
+                        }
+                    />
+                    <Route
+                        path=""
+                        element={
+                            <>
+                                <DashboardHeader
+                                    profile={profile}
+                                    token={token}
+                                    onOpenMobileNav={() => setIsMobileNavOpen(true)}
+                                    onViewProfile={() => navigate("/dashboard/profile")}
+                                    onLogout={onLogout}
+                                />
+                                <div className="pt-32 px-6 py-8 lg:px-12">
+                                    <CommitteeTable
+                                        committees={committees}
+                                        meta={meta}
+                                        isLoading={isLoading}
+                                        isError={isError}
+                                        error={error}
+                                        onRefresh={refresh}
+                                        onCreate={() => setIsCreateOpen(true)}
+                                        canCreate={profile?.data?.role === "ADMIN"}
+                                        onViewCommittee={(committee) => {
+                                            navigate(`/dashboard/committee/${committee.id}`);
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        }
+                    />
+                    <Route
+                        path="*"
+                        element={
+                            <>
+                                <DashboardHeader
+                                    profile={profile}
+                                    token={token}
+                                    onOpenMobileNav={() => setIsMobileNavOpen(true)}
+                                    onViewProfile={() => navigate("/dashboard/profile")}
+                                    onLogout={onLogout}
+                                />
+                                <div className="pt-32 px-6 py-8 lg:px-12">
+                                    <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center">
+                                        <p className="text-white/60">Page not found.</p>
+                                    </div>
+                                </div>
+                            </>
+                        }
+                    />
+                </Routes>
             </main>
             <CreateCommitteeModal
                 isOpen={isCreateOpen}
@@ -271,5 +301,100 @@ export default function DashboardPage({ token, profile, onLogout }) {
                 error={createError}
             />
         </div>
+    );
+}
+
+// Component to handle committee details route
+function CommitteeDetailsRoute({ token, profile, onRefresh }) {
+    const { committeeId } = useParams();
+    const navigate = useNavigate();
+    const { showToast } = useToast();
+    const [committee, setCommittee] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!committeeId || !token) {
+            navigate("/dashboard");
+            return;
+        }
+
+        setIsLoading(true);
+        getCommittees(token)
+            .then((response) => {
+                const committeesList = Array.isArray(response?.data)
+                    ? response.data
+                    : Array.isArray(response)
+                        ? response
+                        : [];
+                const found = committeesList.find((c) => c.id === Number(committeeId));
+                if (found) {
+                    setCommittee(found);
+                } else {
+                    showToast({
+                        title: "Committee not found",
+                        description: "The requested committee could not be found.",
+                        variant: "error",
+                    });
+                    navigate("/dashboard");
+                }
+            })
+            .catch((error) => {
+                showToast({
+                    title: "Failed to load committee",
+                    description: error.message || "Please try again later.",
+                    variant: "error",
+                });
+                navigate("/dashboard");
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, [committeeId, token, navigate, showToast]);
+
+    if (isLoading) {
+        return (
+            <>
+                <DashboardHeader
+                    profile={profile}
+                    token={token}
+                    onOpenMobileNav={() => {}}
+                    onViewProfile={() => navigate("/dashboard/profile")}
+                    onLogout={() => {}}
+                />
+                <div className="pt-32 px-6 py-8 lg:px-12">
+                    <div className="flex items-center justify-center min-h-[60vh]">
+                        <div className="text-center">
+                            <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-solid border-yellow-400 border-r-transparent"></div>
+                            <p className="mt-4 text-sm text-white/60">Loading committee...</p>
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
+    if (!committee) {
+        return null;
+    }
+
+    return (
+        <>
+            <DashboardHeader
+                profile={profile}
+                token={token}
+                onOpenMobileNav={() => {}}
+                onViewProfile={() => navigate("/dashboard/profile")}
+                onLogout={() => {}}
+            />
+            <div className="pt-32 px-6 py-8 lg:px-12">
+                <CommitteeDetailsPage
+                    committee={committee}
+                    token={token}
+                    profile={profile}
+                    onBack={() => navigate("/dashboard")}
+                    onRefresh={onRefresh}
+                />
+            </div>
+        </>
     );
 }

@@ -1,6 +1,32 @@
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { navigation } from "../../constants/navigation.js";
 
-export function MobileSidebar({ isOpen, onClose, activeNav, onSelectNav }) {
+export function MobileSidebar({ isOpen, onClose, activeNav }) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    // Map navigation IDs to routes
+    const getRoute = (id) => {
+        switch (id) {
+            case "committees":
+                return "/dashboard";
+            case "calendar":
+                return "/dashboard/calendar";
+            case "profile":
+                return "/dashboard/profile";
+            default:
+                return "/dashboard";
+        }
+    };
+    
+    // Determine active nav from location
+    const currentActiveNav = location.pathname.includes("/profile")
+        ? "profile"
+        : location.pathname.includes("/calendar")
+        ? "calendar"
+        : location.pathname.includes("/committee/")
+        ? "committees"
+        : "committees";
     if (!isOpen) {
         return null;
     }
@@ -17,31 +43,36 @@ export function MobileSidebar({ isOpen, onClose, activeNav, onSelectNav }) {
                     ✕
                 </button>
                 <div className="mb-10 mt-6">
-                    <a href="#home" className="text-2xl font-semibold text-white">
+                    <Link to="/dashboard" className="text-2xl font-semibold text-white">
                         Committees<span className="text-yellow-300">Board</span>
-                    </a>
+                    </Link>
                     <p className="mt-2 text-sm text-white/50">
                         Committees command center
                     </p>
                 </div>
                 <nav className="flex flex-1 flex-col gap-2">
-                    {navigation.map((item) => (
-                        <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => onSelectNav(item.id)}
-                            className={`flex items-center justify-between rounded-lg px-4 py-3 text-left text-sm font-medium transition ${
-                                activeNav === item.id
-                                    ? "bg-yellow-400/20 text-yellow-200"
-                                    : "text-white/70 hover:bg-white/5 hover:text-white"
-                            }`}
-                        >
-                            <span>{item.label}</span>
-                            {activeNav === item.id && (
-                                <span className="inline-flex h-2 w-2 rounded-full bg-yellow-300" />
-                            )}
-                        </button>
-                    ))}
+                    {navigation.map((item) => {
+                        const route = getRoute(item.id);
+                        const isActive = currentActiveNav === item.id;
+                        
+                        return (
+                            <Link
+                                key={item.id}
+                                to={route}
+                                onClick={onClose}
+                                className={`flex items-center justify-between rounded-lg px-4 py-3 text-left text-sm font-medium transition ${
+                                    isActive
+                                        ? "bg-yellow-400/20 text-yellow-200"
+                                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                                }`}
+                            >
+                                <span>{item.label}</span>
+                                {isActive && (
+                                    <span className="inline-flex h-2 w-2 rounded-full bg-yellow-300" />
+                                )}
+                            </Link>
+                        );
+                    })}
                 </nav>
             </div>
             <div className="flex-1" onClick={onClose} aria-hidden />
