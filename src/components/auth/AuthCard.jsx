@@ -28,27 +28,39 @@ export function AuthCard({
 
     return (
         <Card className="w-full max-w-md">
-            <CardHeader>
-                <div className="flex items-center justify-between gap-3">
-                    <CardTitle>{isLogin ? "login your account" : "Create an account"}</CardTitle>
-                    <div className="rounded-full border border-white/10 bg-white/5 p-1 text-xs font-semibold uppercase tracking-wide text-white/70">
+            <CardHeader className="space-y-4">
+                <CardTitle className="text-base sm:text-lg font-semibold text-white">
+                {isLogin ? "login your account" : "Create an account"}
+                </CardTitle>
+
+                <div className="rounded-full bg-slate-900/80 p-1">
+                    <div className="grid grid-cols-2 gap-1">
                         <button
                             type="button"
                             onClick={() => onModeChange("login")}
-                            className={`rounded-full px-3 py-1 transition ${isLogin ? "bg-white text-slate-900" : "text-white/70"}`}
+                            className={`w-full rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+                                isLogin
+                                    ? "bg-yellow-400 text-slate-900 shadow-sm"
+                                    : "bg-transparent text-white/80 hover:text-white"
+                            }`}
                         >
                             Login
                         </button>
                         <button
                             type="button"
                             onClick={() => onModeChange("signup")}
-                            className={`rounded-full px-3 py-1 transition ${!isLogin ? "bg-white text-slate-900" : "text-white/70"}`}
+                            className={`w-full rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+                                !isLogin
+                                    ? "bg-yellow-400 text-slate-900 shadow-sm"
+                                    : "bg-transparent text-white/80 hover:text-white"
+                            }`}
                         >
                             Signup
                         </button>
                     </div>
                 </div>
-                <p className="text-sm text-white/70">
+
+                <p className="text-xs sm:text-sm text-white/70">
                     {isLogin
                         ? "Enter your credentials to access the dashboard."
                         : "Fill out the details below to register a new account."}

@@ -273,3 +273,17 @@ export async function updateDrawAmount(token, data) {
         body: JSON.stringify(cleanData),
     });
 }
+
+export async function toggleDrawCompleted(token, data) {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined && value !== null && value !== ""),
+    );
+
+    return request(API.COMMITTEE.DRAW.USER_WISE_COMPLETED, {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(cleanData),
+    });
+}

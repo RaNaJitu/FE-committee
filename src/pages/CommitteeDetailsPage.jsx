@@ -454,7 +454,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                         <th className="px-5 py-3 font-semibold">Draw Time</th>
                                         <th className="px-5 py-3 font-semibold">Max Amount</th>
                                         <th className="px-5 py-3 font-semibold">Draw Amount</th>
-                                        {isAdmin && (
+                                        {isAdmin && committee.committeeType !== "LOTTERY" && (
                                             <th className="px-5 py-3 font-semibold text-center">Timer</th>
                                         )}
                                     </tr>
@@ -559,7 +559,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                         {drawAmount}
                                                     </td>
                                                 )}
-                                                {isAdmin && (
+                                                {isAdmin && committee.committeeType !== "LOTTERY" && (
                                                     <td className="px-5 py-4 text-center">
                                                         {canOpenTimer ? (
                                                             <Button

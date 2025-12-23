@@ -47,6 +47,17 @@ export function CreateCommitteeModal({
                         placeholder="e.g. Third Committee"
                     />
                 </label>
+                <DatePicker
+                    label="Start Committee Date"
+                    description="Select a date from today onwards"
+                    name="startCommitteeDate"
+                    value={form.startCommitteeDate}
+                    onChange={onChange}
+                    minDate={new Date().toISOString().split('T')[0]}
+                    placeholder="Select start date"
+                    required
+                    error={error && error.includes("date") ? error : undefined}
+                />
                 <label className="block text-sm font-medium text-white/80">
                     Max members
                     <input
@@ -87,17 +98,7 @@ export function CreateCommitteeModal({
                         required
                     />
                 </label>
-                <DatePicker
-                    label="Start Committee Date"
-                    description="Select a date from today onwards"
-                    name="startCommitteeDate"
-                    value={form.startCommitteeDate}
-                    onChange={onChange}
-                    minDate={new Date().toISOString().split('T')[0]}
-                    placeholder="Select start date"
-                    required
-                    error={error && error.includes("date") ? error : undefined}
-                />
+                
                 <label className="block text-sm font-medium text-white/80">
                     Fine Amount
                     <input

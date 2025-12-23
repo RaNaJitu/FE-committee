@@ -14,7 +14,7 @@ export const API_ENDPOINTS = {
     },
     COMMITTEE: {
         LIST: "api/v1/committee/get",
-        CREATE: "api/v1/committee/create",
+        CREATE: "api/v1/committee/add",
         MEMBER: {
             GET: "api/v1/committee/member/get",
             ADD: "api/v1/committee/member/add",
@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
             GET: "api/v1/committee/draw/get",
             AMOUNT_UPDATE: "api/v1/committee/draw/amount-update",
             USER_WISE_PAID: "api/v1/committee/draw/user-wise-paid",
+            USER_WISE_COMPLETED: "api/v1/committee/draw/user-wise-completed",
         },
     },
 };

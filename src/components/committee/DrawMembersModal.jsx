@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Modal } from "../ui/Modal.jsx";
 import { Button } from "../ui/Button.jsx";
-import { getCommitteeMembers, getPaidAmountDrawWise, markUserDrawPaid } from "../../services/apiClient.js";
+import { getCommitteeMembers, getPaidAmountDrawWise, markUserDrawPaid, toggleDrawCompleted } from "../../services/apiClient.js";
 import { useToast } from "../../context/ToastContext.jsx";
 
 const formatDrawDate = (value) => {
@@ -65,6 +65,7 @@ export function DrawMembersModal({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [payingMemberId, setPayingMemberId] = useState(null);
+    const [togglingMemberId, setTogglingMemberId] = useState(null);
     const userRole = profile?.data?.role ?? profile?.role ?? "";
     const isAdmin = userRole === "ADMIN";
     const abortControllerRef = useRef(null);
@@ -161,6 +162,72 @@ export function DrawMembersModal({
     );
     const defaultDrawAmountValue = useMemo(() => sanitizeAmount(drawAmount), [drawAmount]);
     const drawId = draw?.id ?? draw?.committeeDrawId ?? draw?.drawId;
+
+    const handleToggleDrawCompleted = async (member) => {
+        if (!committee?.id || !token || !drawId) {
+            showToast({
+                title: "Missing info",
+                description: "Committee, draw, or authentication details are missing.",
+                variant: "error",
+            });
+            return;
+        }
+
+        const userId = member?.user?.id ?? member?.userId ?? member?.id;
+        if (!userId) {
+            showToast({
+                title: "Missing user",
+                description: "Unable to determine the selected member's ID.",
+                variant: "error",
+            });
+            return;
+        }
+
+        const currentStatus = member?.user?.drawCompleted ?? false;
+        const newStatus = !currentStatus;
+
+        setTogglingMemberId(userId);
+
+        try {
+            await toggleDrawCompleted(token, {
+                committeeId: committee.id,
+                drawId: drawId,
+                userId: userId,
+                isDrawCompleted: newStatus,
+            });
+
+            // Update local state optimistically
+            setMembers((prevMembers) =>
+                prevMembers.map((m) => {
+                    const mUserId = m?.user?.id ?? m?.userId ?? m?.id;
+                    if (mUserId === userId) {
+                        return {
+                            ...m,
+                            user: {
+                                ...m.user,
+                                drawCompleted: newStatus,
+                            },
+                        };
+                    }
+                    return m;
+                }),
+            );
+
+            showToast({
+                title: "Status updated",
+                description: `Draw completion status ${newStatus ? "marked" : "unmarked"} successfully.`,
+                variant: "success",
+            });
+        } catch (error) {
+            showToast({
+                title: "Update failed",
+                description: error.message || "Failed to update draw completion status.",
+                variant: "error",
+            });
+        } finally {
+            setTogglingMemberId(null);
+        }
+    };
 
     const handleMarkPaid = async (member) => {
         if (!committee?.id || !token || !drawId) {
@@ -314,6 +381,7 @@ export function DrawMembersModal({
                                                 <th className="px-5 py-3 font-semibold">Paid Amount</th>
                                                 <th className="px-5 py-3 font-semibold">Final Amount</th>
                                                 <th className="px-5 py-3 font-semibold">Total Paid Amount</th>
+                                                <th className="px-5 py-3 font-semibold">Draw completed</th>
                                                 {isAdmin && (
                                                     <th className="px-5 py-3 font-semibold text-right">Action</th>
                                                 )}
@@ -347,6 +415,24 @@ export function DrawMembersModal({
                                                         </td>
                                                         <td className="px-5 py-4">
                                                             {(Number(member?.user?.userDrawAmountPaid) || 0) + (Number(member?.user?.fineAmountPaid) || 0)}
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleToggleDrawCompleted(member)}
+                                                                disabled={togglingMemberId === (member?.user?.id ?? member?.userId ?? member?.id)}
+                                                                className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                                                                    member?.isDrawCompleted
+                                                                        ? "bg-green-500/20 text-green-300 hover:bg-green-500/30"
+                                                                        : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                            >
+                                                                {togglingMemberId === (member?.user?.id ?? member?.userId ?? member?.id)
+                                                                    ? "Updating..."
+                                                                    : member?.isDrawCompleted
+                                                                    ? "Yes"
+                                                                    : "No"}
+                                                            </button>
                                                         </td>
                                                         {isAdmin && (
                                                             <td className="px-5 py-4 text-right">
