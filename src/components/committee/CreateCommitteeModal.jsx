@@ -55,9 +55,43 @@ export function CreateCommitteeModal({
                     onChange={onChange}
                     minDate={new Date().toISOString().split('T')[0]}
                     placeholder="Select start date"
+                    showTime={true}
                     required
                     error={error && error.includes("date") ? error : undefined}
                 />
+                <label className="block text-sm font-medium text-white/80">
+                    Committee Type
+                    <span className="ml-1 text-rose-300">*</span>
+                    <select
+                        className="mt-2 w-full rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                        name="committeeType"
+                        value={form.committeeType || ""}
+                        onChange={onChange}
+                        required
+                    >
+                        <option value="" className="bg-slate-900 text-white">Select committee type</option>
+                        <option value="COUNTER" className="bg-slate-900 text-white">COUNTER</option>
+                        <option value="NORMAL" className="bg-slate-900 text-white">NORMAL</option>
+                        <option value="LOTTERY" className="bg-slate-900 text-white">LOTTERY</option>
+                    </select>
+                </label>
+                {form.committeeType === "LOTTERY" && (
+                    <label className="block text-sm font-medium text-white/80">
+                        Lottery Amount
+                        <span className="ml-1 text-rose-300">*</span>
+                        <input
+                            className="mt-2 w-full rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30"
+                            name="lotteryAmount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.lotteryAmount || ""}
+                            onChange={onChange}
+                            placeholder="e.g. 5000"
+                            required
+                        />
+                    </label>
+                )}
                 <label className="block text-sm font-medium text-white/80">
                     Max members
                     <input
@@ -113,6 +147,19 @@ export function CreateCommitteeModal({
                         required
                     />
                 </label>
+                
+                {/* <DatePicker
+                    label="Fine Date Start"
+                    description="Select a date and time from today onwards"
+                    name="fineDateStart"
+                    value={form.fineDateStart}
+                    onChange={onChange}
+                    minDate={new Date().toISOString().split('T')[0]}
+                    placeholder="Select date and time"
+                    required
+                    showTime={true}
+                    error={error && error.includes("date") ? error : undefined}
+                /> */}
                 <label className="block text-sm font-medium text-white/80">
                     Extra Days For Fine
                     <input

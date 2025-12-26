@@ -183,7 +183,7 @@ export function DrawMembersModal({
             return;
         }
 
-        const currentStatus = member?.user?.drawCompleted ?? false;
+        const currentStatus = member?.user?.isDrawCompleted ?? member?.user?.drawCompleted ?? false;
         const newStatus = !currentStatus;
 
         setTogglingMemberId(userId);
@@ -196,28 +196,14 @@ export function DrawMembersModal({
                 isDrawCompleted: newStatus,
             });
 
-            // Update local state optimistically
-            setMembers((prevMembers) =>
-                prevMembers.map((m) => {
-                    const mUserId = m?.user?.id ?? m?.userId ?? m?.id;
-                    if (mUserId === userId) {
-                        return {
-                            ...m,
-                            user: {
-                                ...m.user,
-                                drawCompleted: newStatus,
-                            },
-                        };
-                    }
-                    return m;
-                }),
-            );
-
             showToast({
                 title: "Status updated",
                 description: `Draw completion status ${newStatus ? "marked" : "unmarked"} successfully.`,
                 variant: "success",
             });
+            
+            // Reload members list to get updated data from server
+            loadMembers();
         } catch (error) {
             showToast({
                 title: "Update failed",
@@ -399,6 +385,7 @@ export function DrawMembersModal({
                                                         ? `member-${phoneNo}-${index}` 
                                                         : `member-${index}`;
                                                 
+                                                
                                                 return (
                                                     <tr key={uniqueKey} className="transition hover:bg-white/5">
                                                         <td className="px-5 py-4 font-semibold text-white">
@@ -422,14 +409,14 @@ export function DrawMembersModal({
                                                                 onClick={() => handleToggleDrawCompleted(member)}
                                                                 disabled={togglingMemberId === (member?.user?.id ?? member?.userId ?? member?.id)}
                                                                 className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                                                                    member?.isDrawCompleted
+                                                                    member?.user?.isDrawCompleted
                                                                         ? "bg-green-500/20 text-green-300 hover:bg-green-500/30"
                                                                         : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
                                                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                                                             >
                                                                 {togglingMemberId === (member?.user?.id ?? member?.userId ?? member?.id)
                                                                     ? "Updating..."
-                                                                    : member?.isDrawCompleted
+                                                                    : member?.user?.isDrawCompleted
                                                                     ? "Yes"
                                                                     : "No"}
                                                             </button>

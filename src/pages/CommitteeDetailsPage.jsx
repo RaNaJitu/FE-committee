@@ -8,7 +8,7 @@ import { CommitteeMembersModal } from "../components/committee/CommitteeMembersM
 import { DrawMembersModal } from "../components/committee/DrawMembersModal.jsx";
 import { DrawTimerModal } from "../components/committee/DrawTimerModal.jsx";
 
-const formatDrawDate = (value) => {
+export const formatDrawDate = (value) => {
     if (!value) return "—";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -20,7 +20,7 @@ const formatDrawDate = (value) => {
     return `${day} ${month} ${year}`;
 };
 
-const formatDrawTime = (value) => {
+export const formatDrawTime = (value) => {
     if (!value) return "—";
 
     const normalize = () => {

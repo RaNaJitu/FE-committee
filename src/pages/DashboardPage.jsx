@@ -39,6 +39,8 @@ export default function DashboardPage({ token, profile, onLogout }) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [createForm, setCreateForm] = useState({
         committeeName: "",
+        committeeType: "",
+        lotteryAmount: "",
         commissionMaxMember: "",
         committeeAmount: "",
         noOfMonths: "",
@@ -67,9 +69,11 @@ export default function DashboardPage({ token, profile, onLogout }) {
         }));
     };
 
-    const resetCreateForm = () => {
+        const resetCreateForm = () => {
         setCreateForm({
             committeeName: "",
+            committeeType: "",
+            lotteryAmount: "",
             commissionMaxMember: "",
             committeeAmount: "",
             noOfMonths: "",
@@ -91,6 +95,21 @@ export default function DashboardPage({ token, profile, onLogout }) {
         if (!name) {
             setCreateError("Please provide a committee name.");
             return;
+        }
+
+        const committeeType = createForm.committeeType?.trim();
+        if (!committeeType || !["COUNTER", "NORMAL", "LOTTERY"].includes(committeeType)) {
+            setCreateError("Please select a valid committee type.");
+            return;
+        }
+
+        // Validate lottery amount if LOTTERY type is selected
+        if (committeeType === "LOTTERY") {
+            const lotteryAmount = Number.parseFloat(createForm.lotteryAmount);
+            if (Number.isNaN(lotteryAmount) || lotteryAmount <= 0) {
+                setCreateError("Please enter a valid lottery amount (must be greater than 0).");
+                return;
+            }
         }
 
         const maxMembers = Number.parseInt(createForm.commissionMaxMember, 10);
@@ -147,8 +166,8 @@ export default function DashboardPage({ token, profile, onLogout }) {
         }
 
         const extraDaysForFine = Number.parseInt(createForm.extraDaysForFine, 10);
-        if (Number.isNaN(extraDaysForFine) || extraDaysForFine < 0) {
-            setCreateError("Please enter a valid number of extra days for fine (must be 0 or greater).");
+        if (Number.isNaN(extraDaysForFine) || extraDaysForFine <= 0) {
+            setCreateError("Please enter a valid number of extra days for fine (must be 1 or greater).");
             return;
         }
 
@@ -158,6 +177,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
 
         const payload = {
             committeeName: name,
+            committeeType: committeeType,
             commissionMaxMember: maxMembers,
             committeeAmount: amount,
             noOfMonths: noOfMonths,
@@ -165,6 +185,12 @@ export default function DashboardPage({ token, profile, onLogout }) {
             fineAmount: fineAmount,
             extraDaysForFine: extraDaysForFine,
         };
+
+        // Include lottery amount only if LOTTERY type is selected
+        if (committeeType === "LOTTERY") {
+            const lotteryAmount = Number.parseFloat(createForm.lotteryAmount);
+            payload.lotteryAmount = lotteryAmount;
+        }
 
         createCommittee(token, payload)
             .then((result) => {

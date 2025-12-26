@@ -1,3 +1,4 @@
+import { formatDrawTime } from "../../pages/CommitteeDetailsPage.jsx";
 import { Button } from "../ui/Button.jsx";
 import { StatusBadge } from "./StatusBadge.jsx";
 
@@ -66,6 +67,7 @@ export function CommitteeTable({
                         <thead className="bg-white/5 text-xs uppercase tracking-wide text-white/60">
                             <tr>
                                 <th className="px-5 py-3 font-semibold">Name</th>
+                                <th className="px-5 py-3 font-semibold">Committee Type</th>
                                 <th className="px-5 py-3 font-semibold">Amount</th>
                                 <th className="px-5 py-3 font-semibold">Max Members</th>
                                 {/* <th className="px-5 py-3 font-semibold">Creat Date</th> */}
@@ -83,6 +85,7 @@ export function CommitteeTable({
                                     committee.amount ??
                                     committee.budget ??
                                     "—";
+                                const committeeType = committee.committeeType ?? "—";
                                 const members =
                                     committee.commissionMaxMember ??
                                     committee.maxMembers ??
@@ -100,6 +103,13 @@ export function CommitteeTable({
                                 const extraDaysForFine = committee.extraDaysForFine
                                     ? Number(committee.extraDaysForFine ?? 0)
                                     : "—";
+                                const fineStartDate = committee.extraDaysForFine
+                                    ? new Date(committee.fineStartDate).toLocaleString()
+                                    : "—";
+                                    const rawDate = committee.fineStartDate
+                                    const rawTime = committee.fineStartDate
+                                    // const formattedDate = formatDrawDate(rawDate);
+                                    const formattedTime = formatDrawTime(rawTime);
                                 
                                 const noOfMonths = committee.noOfMonths
                                     ? Number(committee.noOfMonths)
@@ -122,12 +132,13 @@ export function CommitteeTable({
                                                 committee.name ??
                                                 "Untitled committee"}
                                         </td>
+                                        <td className="px-5 py-4">{committeeType}</td>
                                         <td className="px-5 py-4">{amount}</td>
                                         <td className="px-5 py-4">{members}</td>
                                         {/* <td className="px-5 py-4">{createdAt}</td> */}
                                         <td className="px-5 py-4">{startDate}</td>
                                         <td className="px-5 py-4">{fineAmount}</td>
-                                        <td className="px-5 py-4">{extraDaysForFine}</td>
+                                        <td className="px-5 py-4">{formattedTime}</td>
                                         <td className="px-5 py-4">{noOfMonths}</td>
                                         <td className="px-5 py-4">
                                             <StatusBadge

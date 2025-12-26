@@ -13,10 +13,13 @@ export function DatePicker({
     className = "",
     placeholder = "Select a date",
     name,
+    showTime = false,
 }) {
     const id = useId();
     const [isOpen, setIsOpen] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [selectedTime, setSelectedTime] = useState({ hour: 12, minute: 0, ampm: "AM" });
+    const [dateSelected, setDateSelected] = useState(false);
     const containerRef = useRef(null);
     const inputRef = useRef(null);
 
@@ -50,6 +53,41 @@ export function DatePicker({
     const minDateObj = parseDate(minDate);
     const maxDateObj = parseDate(maxDate);
 
+    // Convert 24-hour to 12-hour format
+    const convertTo12Hour = (hour24) => {
+        if (hour24 === 0) return { hour: 12, ampm: "AM" };
+        if (hour24 === 12) return { hour: 12, ampm: "PM" };
+        if (hour24 < 12) return { hour: hour24, ampm: "AM" };
+        return { hour: hour24 - 12, ampm: "PM" };
+    };
+
+    // Convert 12-hour to 24-hour format
+    const convertTo24Hour = (hour12, ampm) => {
+        if (ampm === "AM") {
+            return hour12 === 12 ? 0 : hour12;
+        } else {
+            return hour12 === 12 ? 12 : hour12 + 12;
+        }
+    };
+
+    // Extract time from value if it exists
+    useEffect(() => {
+        if (selectedDate && showTime) {
+            const hour24 = selectedDate.getHours();
+            const { hour, ampm } = convertTo12Hour(hour24);
+            setSelectedTime({
+                hour,
+                minute: selectedDate.getMinutes(),
+                ampm,
+            });
+            setDateSelected(true);
+        } else if (selectedDate && !showTime) {
+            setDateSelected(true);
+        } else {
+            setDateSelected(false);
+        }
+    }, [value, showTime, selectedDate]);
+
     // Initialize current month to selected date or today
     useEffect(() => {
         if (selectedDate && !isNaN(selectedDate.getTime())) {
@@ -81,11 +119,22 @@ export function DatePicker({
         const d = new Date(dateString);
         if (isNaN(d.getTime())) return "";
         
-        return d.toLocaleDateString("en-US", {
+        const dateStr = d.toLocaleDateString("en-US", {
             year: "numeric",
             month: "short",
             day: "numeric",
         });
+        
+        if (showTime) {
+            const timeStr = d.toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            });
+            return `${dateStr} ${timeStr}`;
+        }
+        
+        return dateStr;
     };
 
     const formatDateForInput = (date) => {
@@ -156,9 +205,17 @@ export function DatePicker({
     const handleDateSelect = (date) => {
         if (isDisabled(date)) return;
         
+        // Use selected time if showTime is enabled, otherwise use noon
+        let hour24 = 12;
+        let minute = 0;
+        
+        if (showTime) {
+            hour24 = convertTo24Hour(selectedTime.hour, selectedTime.ampm);
+            minute = selectedTime.minute;
+        }
+        
         // Format date as ISO string (2026-01-01T12:39:43.495Z)
-        // Set time to noon to avoid timezone issues
-        const isoDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0, 0);
+        const isoDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour24, minute, 0, 0);
         const formattedDate = isoDate.toISOString();
         
         const syntheticEvent = {
@@ -168,7 +225,54 @@ export function DatePicker({
             },
         };
         onChange(syntheticEvent);
-        setIsOpen(false);
+        
+        // Mark date as selected and keep calendar open if time selection is enabled
+        if (showTime) {
+            setDateSelected(true);
+        } else {
+            setIsOpen(false);
+        }
+    };
+
+    const handleTimeChange = (type, value) => {
+        let hour = selectedTime.hour;
+        let minute = selectedTime.minute;
+        let ampm = selectedTime.ampm;
+        
+        if (type === "hour") {
+            const numValue = Number.parseInt(value, 10);
+            if (isNaN(numValue)) return;
+            hour = Math.max(1, Math.min(12, numValue));
+        } else if (type === "minute") {
+            const numValue = Number.parseInt(value, 10);
+            if (isNaN(numValue)) return;
+            minute = Math.max(0, Math.min(59, numValue));
+        } else if (type === "ampm") {
+            ampm = value;
+        }
+        
+        setSelectedTime({ hour, minute, ampm });
+        
+        // Update the date with new time if date is already selected
+        if (selectedDate) {
+            const hour24 = convertTo24Hour(hour, ampm);
+            const isoDate = new Date(
+                selectedDate.getFullYear(),
+                selectedDate.getMonth(),
+                selectedDate.getDate(),
+                hour24,
+                minute,
+                0,
+                0
+            );
+            const syntheticEvent = {
+                target: {
+                    name: name,
+                    value: isoDate.toISOString(),
+                },
+            };
+            onChange(syntheticEvent);
+        }
     };
 
     const goToPreviousMonth = () => {
@@ -363,8 +467,59 @@ export function DatePicker({
                             })}
                         </div>
 
-                        {/* Today Button */}
-                        <div className="mt-4 flex justify-center border-t border-white/10 pt-4">
+                        {/* Time Selection - Show after date is selected */}
+                        {showTime && dateSelected && selectedDate && (
+                            <div className="mt-4 border-t border-white/10 pt-4">
+                                <div className="mb-3 text-xs font-medium text-white/70">Select Time</div>
+                                <div className="flex items-end gap-3">
+                                    <div className="flex-1">
+                                        <label className="mb-1 block text-xs text-white/60">Hour</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="12"
+                                            value={selectedTime.hour}
+                                            onChange={(e) => handleTimeChange("hour", e.target.value)}
+                                            className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="mb-1 block text-xs text-white/60">Minute</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="59"
+                                            value={selectedTime.minute}
+                                            onChange={(e) => handleTimeChange("minute", e.target.value)}
+                                            className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="mb-1 block text-xs text-white/60">AM/PM</label>
+                                        <select
+                                            value={selectedTime.ampm}
+                                            onChange={(e) => handleTimeChange("ampm", e.target.value)}
+                                            className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:border-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                                        >
+                                            <option value="AM" className="bg-slate-900 text-white">AM</option>
+                                            <option value="PM" className="bg-slate-900 text-white">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="mt-4 flex justify-center gap-2 border-t border-white/10 pt-4">
+                            {showTime && dateSelected && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(false)}
+                                    className="rounded-lg bg-yellow-400 px-4 py-2 text-xs font-medium text-slate-900 transition hover:bg-yellow-400/90"
+                                >
+                                    Done
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={goToToday}

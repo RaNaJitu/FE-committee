@@ -20,10 +20,10 @@ export const API_ENDPOINTS = {
             ADD: "api/v1/committee/member/add",
         },
         DRAW: {
-            GET: "api/v1/committee/draw/get",
-            AMOUNT_UPDATE: "api/v1/committee/draw/amount-update",
-            USER_WISE_PAID: "api/v1/committee/draw/user-wise-paid",
-            USER_WISE_COMPLETED: "api/v1/committee/draw/user-wise-completed",
+            GET: "api/v1/draw/get",
+            AMOUNT_UPDATE: "api/v1/draw/amount-update",
+            USER_WISE_PAID: "api/v1/draw/user-wise-paid",
+            USER_WISE_COMPLETED: "api/v1/draw/user-wise-completed",
         },
     },
 };
