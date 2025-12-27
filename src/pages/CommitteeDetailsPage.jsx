@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "../context/ToastContext.jsx";
-import { addCommitteeMember, getCommitteeDraws, updateDrawAmount } from "../services/apiClient.js";
+import { addCommitteeMember, getCommitteeDraws, updateDrawAmount, getCommitteeMembers, getCommitteeAnalysis } from "../services/apiClient.js";
 import { Button } from "../components/ui/Button.jsx";
 import { StatusBadge } from "../components/committee/StatusBadge.jsx";
 import { AddCommitteeMemberModal } from "../components/committee/AddCommitteeMemberModal.jsx";
@@ -57,9 +57,16 @@ export const formatDrawTime = (value) => {
 
 export default function CommitteeDetailsPage({ committee, token, profile, onBack, onRefresh }) {
     const { showToast } = useToast();
+    const [activeTab, setActiveTab] = useState("members");
     const [committeeDrawsList, setCommitteeDrawsList] = useState([]);
     const [isLoadingDraws, setIsLoadingDraws] = useState(false);
     const [drawsError, setDrawsError] = useState("");
+    const [membersList, setMembersList] = useState([]);
+    const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+    const [membersError, setMembersError] = useState("");
+    const [analysisData, setAnalysisData] = useState(null);
+    const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+    const [analysisError, setAnalysisError] = useState("");
     const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
     const [isGetMemberListModalOpen, setIsGetMemberListModalOpen] = useState(false);
     const [selectedDraw, setSelectedDraw] = useState(null);
@@ -82,7 +89,13 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
 
     useEffect(() => {
         if (committee?.id && token) {
-            loadCommitteeDraws();
+            if (activeTab === "draws") {
+                loadCommitteeDraws();
+            } else if (activeTab === "members") {
+                loadCommitteeMembers();
+            } else if (activeTab === "analysis") {
+                loadCommitteeAnalysis();
+            }
         }
         
         // Cleanup debounce timer on unmount
@@ -91,7 +104,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 clearTimeout(debounceTimerRef.current);
             }
         };
-    }, [committee?.id, token]);
+    }, [committee?.id, token, activeTab]);
 
     const loadCommitteeDraws = () => {
         if (!committee?.id || !token) return;
@@ -112,6 +125,48 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
             })
             .finally(() => {
                 setIsLoadingDraws(false);
+            });
+    };
+
+    const loadCommitteeMembers = () => {
+        if (!committee?.id || !token) return;
+        
+        setIsLoadingMembers(true);
+        setMembersError("");
+        getCommitteeMembers(token, committee.id)
+            .then((response) => {
+                const members = Array.isArray(response?.data)
+                    ? response.data
+                    : Array.isArray(response)
+                        ? response
+                        : [];
+                setMembersList(members);
+            })
+            .catch((err) => {
+                setMembersError(err.message || "Failed to load committee members.");
+            })
+            .finally(() => {
+                setIsLoadingMembers(false);
+            });
+    };
+
+    const loadCommitteeAnalysis = () => {
+        if (!committee?.id || !token) return;
+        
+        setIsLoadingAnalysis(true);
+        setAnalysisError("");
+        getCommitteeAnalysis(token, committee.id)
+            .then((response) => {
+                // Handle different response structures
+                const data = response?.data ?? response ?? null;
+                setAnalysisData(data);
+            })
+            .catch((err) => {
+                setAnalysisError(err.message || "Failed to load committee analysis.");
+                setAnalysisData(null);
+            })
+            .finally(() => {
+                setIsLoadingAnalysis(false);
             });
     };
 
@@ -291,6 +346,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 setIsMemberModalOpen(false);
                 resetMemberForm();
                 loadCommitteeDraws();
+                loadCommitteeMembers();
                 if (onRefresh) {
                     onRefresh();
                 }
@@ -329,90 +385,111 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
     const committeeName = committee.committeeName ?? committee.title ?? committee.name ?? "Untitled Committee";
     const amount = committee.committeeAmount ?? committee.amount ?? committee.budget ?? "—";
     const maxMembers = committee.commissionMaxMember ?? committee.maxMembers ?? committee.members ?? "—";
-    const noOfMonths = committee.noOfMonths ?? "—";
-    const createdAt = committee.createdAt
-        ? new Date(committee.createdAt).toLocaleString()
+    const startDate = committee.startCommitteeDate
+        ? new Date(committee.startCommitteeDate).toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+        })
         : "—";
     const statusLabel = committee.committeeStatus ?? committee.status ?? committee.state ?? "INACTIVE";
     const userRole = profile?.data?.role ?? profile?.role ?? "";
     const isAdmin = userRole === "ADMIN";
+    
+    // Get first letter of committee name for avatar
+    const avatarLetter = committeeName.charAt(0).toUpperCase();
 
     return (
         <div className="text-white px-4 py-6 sm:px-6 lg:px-12">
             <div className="max-w-6xl mx-auto space-y-6">
-                {/* Back Button */}
-                {onBack && (
-                    <Button variant="ghost" onClick={onBack} className="mb-4">
-                        ← Back to Committees
-                    </Button>
-                )}
+                {/* Header */}
+                <h1 className="text-xl sm:text-2xl font-semibold text-white">
+                    Committee details
+                </h1>
 
-                {/* Committee Details Card */}
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 shadow-lg shadow-black/30">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-                        <div>
-                            <h1 className="text-2xl sm:text-3xl font-semibold text-white">
+                {/* Committee Info Card */}
+                <div className="rounded-2xl border border-white/10 p-6 shadow-lg shadow-black/30">
+                {/* <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-900/30 to-purple-800/20 p-6 shadow-lg shadow-black/30"> */}
+                    <div className="flex items-center gap-4">
+                        {/* Avatar */}
+                        <div className="flex-shrink-0 w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center border-2 border-white/20">
+                            <span className="text-2xl font-bold text-white">{avatarLetter}</span>
+                        </div>
+                        
+                        {/* Committee Info */}
+                        <div className="flex-1 min-w-0">
+                            <h2 className="text-xl sm:text-2xl font-semibold text-white mb-2">
                                 {committeeName}
-                            </h1>
-                            <p className="text-sm text-white/60 mt-2">
-                                Committee details and member management
-                            </p>
+                            </h2>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/90">
+                                <span>Amount: {typeof amount === "number" ? amount.toLocaleString() : amount}</span>
+                                <span>Max Members: {maxMembers}</span>
+                                <span>Start: {startDate}</span>
+                            </div>
                         </div>
-                        <StatusBadge status={statusLabel} />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold uppercase tracking-wide text-white/50">
-                                Committee Amount
-                            </label>
-                            <p className="text-sm text-white/90 font-medium">{amount}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold uppercase tracking-wide text-white/50">
-                                Max Members
-                            </label>
-                            <p className="text-sm text-white/90 font-medium">{maxMembers}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold uppercase tracking-wide text-white/50">
-                                Number of Months
-                            </label>
-                            <p className="text-sm text-white/90 font-medium">{noOfMonths}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold uppercase tracking-wide text-white/50">
-                                Created Date
-                            </label>
-                            <p className="text-sm text-white/90 font-medium">{createdAt}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold uppercase tracking-wide text-white/50">
-                                Committee ID
-                            </label>
-                            <p className="text-sm text-white/90 font-medium">{committee.id ?? "—"}</p>
+                        
+                        {/* Status Badge */}
+                        <div className="flex-shrink-0">
+                            <StatusBadge status={statusLabel} />
                         </div>
                     </div>
                 </div>
 
-                {/* Members Section */}
+                {/* Tab Navigation */}
+                <div className="flex gap-2 border-b border-white/10">
+                    
+                    <button
+                        onClick={() => setActiveTab("members")}
+                        className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${
+                            activeTab === "members"
+                                ? "bg-yellow-400 text-slate-900"
+                                : "text-white/70 hover:text-white"
+                        }`}
+                    >
+                        Members
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("draws")}
+                        className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${
+                            activeTab === "draws"
+                                ? "bg-yellow-400 text-slate-900"
+                                : "text-white/70 hover:text-white"
+                        }`}
+                    >
+                        Committee Draw
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("analysis")}
+                        className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${
+                            activeTab === "analysis"
+                                ? "bg-yellow-400 text-slate-900"
+                                : "text-white/70 hover:text-white"
+                        }`}
+                    >
+                        Analysis
+                    </button>
+                </div>
+
+                {/* Tab Content */}
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                        <div>
-                            <h2 className="text-lg font-semibold text-white">Committee Draw List</h2>
-                            <p className="text-sm text-white/60 mt-1">
-                                {committeeDrawsList.length} draw{committeeDrawsList.length !== 1 ? "s" : ""} recorded for this committee
-                            </p>
-                        </div>
-                        <div className="flex flex-wrap gap-3">
-                            <Button variant="secondary" onClick={handleGetMemberList}>
-                                Get member list
-                            </Button>
-                            <Button variant="primary" onClick={handleAddMember}>
-                                Add Member
-                            </Button>
-                        </div>
-                    </div>
+                    {activeTab === "draws" && (
+                        <>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">Committee Draw List</h2>
+                                    <p className="text-sm text-white/60 mt-1">
+                                        {committeeDrawsList.length} draw{committeeDrawsList.length !== 1 ? "s" : ""} recorded for this committee
+                                    </p>
+                                </div>
+                                {/* <div className="flex flex-wrap gap-3">
+                                    <Button variant="secondary" onClick={handleGetMemberList}>
+                                        Get member list
+                                    </Button>
+                                    <Button variant="primary" onClick={handleAddMember}>
+                                        Add Member
+                                    </Button>
+                                </div> */}
+                            </div>
 
                     {isLoadingDraws ? (
                         <div className="p-8 text-center text-sm text-white/60">
@@ -586,6 +663,216 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                 </tbody>
                             </table>
                         </div>
+                    )}
+                </>
+                    )}
+
+                    {activeTab === "members" && (
+                        <>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">Committee Members</h2>
+                                    <p className="text-sm text-white/60 mt-1">
+                                        {membersList.length} member{membersList.length !== 1 ? "s" : ""} in this committee
+                                    </p>
+                                </div>
+                                {isAdmin && (
+                                    <Button variant="primary" onClick={handleAddMember}>
+                                        Add Member
+                                    </Button>
+                                )}
+                            </div>
+
+                            {isLoadingMembers ? (
+                                <div className="p-8 text-center text-sm text-white/60">
+                                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-yellow-400 border-r-transparent"></div>
+                                    <p className="mt-3">Loading members...</p>
+                                </div>
+                            ) : membersError ? (
+                                <div className="p-8 text-center text-sm text-rose-200">
+                                    <p>{membersError}</p>
+                                    <Button
+                                        variant="secondary"
+                                        size="md"
+                                        className="mt-4"
+                                        onClick={loadCommitteeMembers}
+                                    >
+                                        Retry
+                                    </Button>
+                                </div>
+                            ) : membersList.length === 0 ? (
+                                <div className="p-8 text-center text-sm text-white/60">
+                                    <p>No members found for this committee.</p>
+                                    <Button
+                                        variant="primary"
+                                        size="md"
+                                        className="mt-4"
+                                        onClick={handleAddMember}
+                                    >
+                                        Add First Member
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/30">
+                                    <table className="min-w-full divide-y divide-white/10 text-left text-sm text-white/80">
+                                        <thead className="bg-white/5 text-xs uppercase tracking-wide text-white/60">
+                                            <tr>
+                                                <th className="px-5 py-3 font-semibold">S.No</th>
+                                                <th className="px-5 py-3 font-semibold">Name</th>
+                                                <th className="px-5 py-3 font-semibold">Phone</th>
+                                                <th className="px-5 py-3 font-semibold">Email</th>
+                                                <th className="px-5 py-3 font-semibold">draw completed</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {membersList.map((member, index) => (
+                                                <tr key={member.id ?? index} className="transition hover:bg-white/5">
+                                                    <td className="px-5 py-4 text-white/80">
+                                                        {index + 1}
+                                                    </td>
+                                                    <td className="px-5 py-4 font-semibold text-white">
+                                                        {member?.user?.name ?? member.memberName ?? member.name ?? "—"}
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        {member?.user?.phoneNo ?? member.phone ?? member.phoneNo ?? "—"}
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        {member?.user?.email ?? member.email ?? "—"}
+                                                    </td>
+                                                    {/* <td className="px-5 py-4">
+                                                        {member?.user?.isDrawCompleted ? "Yes" : "No"}
+                                                    </td> */}
+                                                    <td className="px-5 py-4">
+                                                            <button
+                                                                type="button"
+                                                                className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                                                                    member?.user?.isDrawCompleted
+                                                                        ? "bg-green-500/20 text-green-300 hover:bg-green-500/30"
+                                                                        : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                            >
+                                                                {member?.user?.isDrawCompleted
+                                                                    ? "Yes"
+                                                                    : "No"}
+                                                            </button>
+                                                        </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {activeTab === "analysis" && (
+                        <>
+                            {isLoadingAnalysis ? (
+                                <div className="p-8 text-center text-sm text-white/60">
+                                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-yellow-400 border-r-transparent"></div>
+                                    <p className="mt-3">Loading analysis...</p>
+                                </div>
+                            ) : analysisError ? (
+                                <div className="p-8 text-center text-sm text-rose-200">
+                                    <p>{analysisError}</p>
+                                    <Button
+                                        variant="secondary"
+                                        size="md"
+                                        className="mt-4"
+                                        onClick={loadCommitteeAnalysis}
+                                    >
+                                        Retry
+                                    </Button>
+                                </div>
+                            ) : analysisData ? (
+                                <div className="rounded-2xl ">
+                                {/* <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-900/30 to-purple-800/20 p-6 shadow-lg shadow-black/30"> */}
+                                    <h2 className="text-xl font-semibold text-white mb-6">Analysis</h2>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Total members */}
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-white/70">Total members</label>
+                                            <p className="text-lg font-semibold text-white">
+                                                {analysisData?.analysis?.totalMembers ?? 
+                                                 analysisData?.analysis?.total_members ?? 
+                                                 analysisData?.analysis?.totalMembersCount ??
+                                                 analysisData?.analysis?.members ??
+                                                 "—"}
+                                            </p>
+                                        </div>
+
+                                        {/* Total amount */}
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-white/70">Total amount</label>
+                                            <p className="text-lg font-semibold text-white">
+                                                {(() => {
+                                                    const amount = analysisData?.analysis?.totalCommitteeAmount 
+                                                    if (amount === null || amount === undefined) return "—";
+                                                    const numAmount = typeof amount === "number" ? amount : Number.parseFloat(amount);
+                                                    return isNaN(numAmount) ? "—" : `₹${numAmount.toLocaleString("en-IN")}`;
+                                                })()}
+                                            </p>
+                                        </div>
+
+                                        {/* Paid amount */}
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-white/70">Paid amount</label>
+                                            <p className="text-lg font-semibold text-white">
+                                                {(() => {
+                                                    const amount = analysisData?.analysis?.totalCommitteePaidAmount;
+                                                    if (amount === null || amount === undefined) return "—";
+                                                    const numAmount = typeof amount === "number" ? amount : Number.parseFloat(amount);
+                                                    return isNaN(numAmount) ? "—" : `₹${numAmount.toLocaleString("en-IN")}`;
+                                                })()}
+                                            </p>
+                                        </div>
+
+                                        {/* Fine amount */}
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-white/70">Fine amount</label>
+                                            <p className="text-lg font-semibold text-white">
+                                                {(() => {
+                                                    const amount = analysisData?.analysis?.totalCommitteeFineAmount;
+                                                    if (amount === null || amount === undefined) return "—";
+                                                    const numAmount = typeof amount === "number" ? amount : Number.parseFloat(amount);
+                                                    return isNaN(numAmount) ? "—" : `₹${numAmount.toLocaleString("en-IN")}`;
+                                                })()}
+                                            </p>
+                                        </div>
+
+                                        {/* Draws completed */}
+                                        <div className="space-y-1 md:col-span-2">
+                                            <label className="text-sm font-medium text-white/70">Draws completed</label>
+                                            <p className="text-lg font-semibold text-white">
+                                                {(() => {
+                                                    const completed = analysisData?.analysis?.noOfDrawsCompleted;
+                                                    const total = analysisData?.analysis?.totalDraws;
+                                                    
+                                                    if (completed === null || completed === undefined) {
+                                                        return total !== null && total !== undefined ? `0/${total}` : "—";
+                                                    }
+                                                    
+                                                    const completedNum = typeof completed === "number" ? completed : Number.parseInt(completed, 10);
+                                                    const totalNum = total !== null && total !== undefined 
+                                                        ? (typeof total === "number" ? total : Number.parseInt(total, 10))
+                                                        : null;
+                                                    
+                                                    if (isNaN(completedNum)) return "—";
+                                                    return totalNum !== null && !isNaN(totalNum) 
+                                                        ? `${completedNum}/${totalNum}` 
+                                                        : String(completedNum);
+                                                })()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-8 text-center text-sm text-white/60">
+                                    <p>No analysis data available.</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

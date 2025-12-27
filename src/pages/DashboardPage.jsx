@@ -46,7 +46,8 @@ export default function DashboardPage({ token, profile, onLogout }) {
         noOfMonths: "",
         startCommitteeDate: "",
         fineAmount: "",
-        extraDaysForFine: "",
+        // extraDaysForFine: "",
+        fineDateStart: "",
     });
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState("");
@@ -79,7 +80,8 @@ export default function DashboardPage({ token, profile, onLogout }) {
             noOfMonths: "",
             startCommitteeDate: "",
             fineAmount: "",
-            extraDaysForFine: "",
+            // extraDaysForFine: "",
+            fineDateStart: "",
         });
         setCreateError("");
     };
@@ -165,9 +167,14 @@ export default function DashboardPage({ token, profile, onLogout }) {
             return;
         }
 
-        const extraDaysForFine = Number.parseInt(createForm.extraDaysForFine, 10);
-        if (Number.isNaN(extraDaysForFine) || extraDaysForFine <= 0) {
-            setCreateError("Please enter a valid number of extra days for fine (must be 1 or greater).");
+        // const extraDaysForFine = Number.parseInt(createForm.extraDaysForFine, 10);
+        // if (Number.isNaN(extraDaysForFine) || extraDaysForFine <= 0) {
+        //     setCreateError("Please enter a valid number of extra days for fine (must be 1 or greater).");
+        //     return;
+        // }
+        const fineStartDate = createForm.fineDateStart.trim();
+        if (isNaN(selectedDate.getTime())) {
+            setCreateError("Please select a valid start committee date.");
             return;
         }
 
@@ -183,7 +190,8 @@ export default function DashboardPage({ token, profile, onLogout }) {
             noOfMonths: noOfMonths,
             startCommitteeDate: startCommitteeDate,
             fineAmount: fineAmount,
-            extraDaysForFine: extraDaysForFine,
+            // extraDaysForFine: extraDaysForFine,
+            fineStartDate: fineStartDate,
         };
 
         // Include lottery amount only if LOTTERY type is selected
@@ -243,7 +251,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
                     />
                     <Route
                         path="committee/:committeeId"
-                        element={<CommitteeDetailsRoute token={token} profile={profile} onRefresh={refresh} />}
+                        element={<CommitteeDetailsRoute token={token} profile={profile} onRefresh={refresh} onLogout={onLogout} />}
                     />
                     <Route
                         path="calendar"
@@ -331,7 +339,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
 }
 
 // Component to handle committee details route
-function CommitteeDetailsRoute({ token, profile, onRefresh }) {
+function CommitteeDetailsRoute({ token, profile, onRefresh, onLogout }) {
     const { committeeId } = useParams();
     const navigate = useNavigate();
     const { showToast } = useToast();
@@ -385,7 +393,7 @@ function CommitteeDetailsRoute({ token, profile, onRefresh }) {
                     token={token}
                     onOpenMobileNav={() => {}}
                     onViewProfile={() => navigate("/dashboard/profile")}
-                    onLogout={() => {}}
+                    onLogout={onLogout}
                 />
                 <div className="pt-32 px-6 py-8 lg:px-12">
                     <div className="flex items-center justify-center min-h-[60vh]">
@@ -410,7 +418,7 @@ function CommitteeDetailsRoute({ token, profile, onRefresh }) {
                 token={token}
                 onOpenMobileNav={() => {}}
                 onViewProfile={() => navigate("/dashboard/profile")}
-                onLogout={() => {}}
+                onLogout={onLogout}
             />
             <div className="pt-32 px-6 py-8 lg:px-12">
                 <CommitteeDetailsPage

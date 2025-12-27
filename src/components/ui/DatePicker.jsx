@@ -473,7 +473,7 @@ export function DatePicker({
                                 <div className="mb-3 text-xs font-medium text-white/70">Select Time</div>
                                 <div className="flex items-end gap-3">
                                     <div className="flex-1">
-                                        <label className="mb-1 block text-xs text-white/60">Hour</label>
+                                        <label className="mb-1 block text-xs text-white/60">Time</label>
                                         <input
                                             type="number"
                                             min="1"

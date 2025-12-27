@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
     COMMITTEE: {
         LIST: "api/v1/committee/get",
         CREATE: "api/v1/committee/add",
+        ANALYSIS: "api/v1/committee/analysis",
         MEMBER: {
             GET: "api/v1/committee/member/get",
             ADD: "api/v1/committee/member/add",

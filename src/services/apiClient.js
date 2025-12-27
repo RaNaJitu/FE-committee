@@ -189,6 +189,15 @@ export async function getCommitteeMembers(token, committeeId) {
     });
 }
 
+export async function getCommitteeAnalysis(token, committeeId) {
+    return request(`${API.COMMITTEE.ANALYSIS}?committeeId=${committeeId}`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+}
+
 export async function getPaidAmountDrawWise(token, committeeId, drawId = null, options = {}) {
     let url = `${API.COMMITTEE.DRAW.USER_WISE_PAID}?committeeId=${committeeId}`;
     if (drawId) {
