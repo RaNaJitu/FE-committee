@@ -729,9 +729,9 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                         <thead className="bg-white/5 text-xs uppercase tracking-wide text-white/60">
                                             <tr>
                                                 <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">S.No</th>
-                                                {idDevelopmentMode && (
+                                                {/* {idDevelopmentMode && (
                                                     <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">User Id</th>
-                                                )}
+                                                )} */}
                                                 <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">Name</th>
                                                 <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">Phone</th>
                                                 <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">Email</th>
@@ -744,11 +744,11 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                     <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 text-white/80 whitespace-nowrap">
                                                         {index + 1}
                                                     </td>
-                                                    {idDevelopmentMode && (
+                                                    {/* {idDevelopmentMode && (
                                                     <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 whitespace-nowrap">
                                                         {member?.user?.id ?? member.userId ?? member.id ?? "—"}
                                                     </td>
-                                                    )}
+                                                    )} */}
                                                     <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold text-white">
                                                         <span className="truncate block max-w-[120px] sm:max-w-none">{member?.user?.name ?? member.memberName ?? member.name ?? "—"}</span>
                                                     </td>
