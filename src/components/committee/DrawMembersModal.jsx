@@ -183,7 +183,7 @@ export function DrawMembersModal({
             return;
         }
 
-        const currentStatus = member?.user?.isDrawCompleted ?? member?.user?.drawCompleted ?? false;
+        const currentStatus = member?.user?.isUserDrawCompleted ?? false;
         const newStatus = !currentStatus;
 
         setTogglingMemberId(userId);
@@ -193,7 +193,7 @@ export function DrawMembersModal({
                 committeeId: committee.id,
                 drawId: drawId,
                 userId: userId,
-                isDrawCompleted: newStatus,
+                isUserDrawCompleted: newStatus,
             });
 
             showToast({
@@ -409,14 +409,14 @@ export function DrawMembersModal({
                                                                 onClick={() => handleToggleDrawCompleted(member)}
                                                                 disabled={togglingMemberId === (member?.user?.id ?? member?.userId ?? member?.id)}
                                                                 className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                                                                    member?.user?.isDrawCompleted
+                                                                    member?.user?.isUserDrawCompleted
                                                                         ? "bg-green-500/20 text-green-300 hover:bg-green-500/30"
                                                                         : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
                                                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                                                             >
                                                                 {togglingMemberId === (member?.user?.id ?? member?.userId ?? member?.id)
                                                                     ? "Updating..."
-                                                                    : member?.user?.isDrawCompleted
+                                                                    : member?.user?.isUserDrawCompleted
                                                                     ? "Yes"
                                                                     : "No"}
                                                             </button>

@@ -71,6 +71,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
     const [isGetMemberListModalOpen, setIsGetMemberListModalOpen] = useState(false);
     const [selectedDraw, setSelectedDraw] = useState(null);
     const [isDrawMemberModalOpen, setIsDrawMemberModalOpen] = useState(false);
+    
     const [memberForm, setMemberForm] = useState({
         committeeId: "",
         name: "",
@@ -87,6 +88,10 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
     const [timerDraw, setTimerDraw] = useState(null);
     const debounceTimerRef = useRef(null);
 
+    const [idDevelopmentMode, setIdDevelopmentMode] = useState(false);
+
+    
+
     useEffect(() => {
         if (committee?.id && token) {
             if (activeTab === "draws") {
@@ -97,7 +102,8 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 loadCommitteeAnalysis();
             }
         }
-        
+        process.env.NODE_ENV === "DEVELOPMENT" && setIdDevelopmentMode(true);
+        setIdDevelopmentMode(true);
         // Cleanup debounce timer on unmount
         return () => {
             if (debounceTimerRef.current) {
@@ -401,16 +407,20 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
 
     return (
         <div className="text-white px-4 py-6 sm:px-6 lg:px-12">
-            <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header */}
-                <h1 className="text-xl sm:text-2xl font-semibold text-white">
-                    Committee details
-                </h1>
-
-                {/* Committee Info Card */}
-                <div className="rounded-2xl border border-white/10 p-6 shadow-lg shadow-black/30">
-                {/* <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-900/30 to-purple-800/20 p-6 shadow-lg shadow-black/30"> */}
-                    <div className="flex items-center gap-4">
+            <div className="max-w-6xl mx-auto space-y-6 mt-8">
+                {/* Committee Info Card with Header Over Border */}
+                <div className="relative">
+                    {/* Header positioned over the border */}
+                    <div className="absolute -top-3 left-6 z-10 ">
+                        <span className="bg-slate-950 px-3 text-xl sm:text-2xl font-semibold text-white">
+                            Committee details
+                        </span>
+                    </div>
+                    
+                    {/* Committee Info Card */}
+                    <div className="rounded-2xl border border-white/10 p-6 shadow-lg shadow-black/30">
+                    {/* <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-900/30 to-purple-800/20 p-6 shadow-lg shadow-black/30"> */}
+                        <div className="flex items-center gap-4">
                         {/* Avatar */}
                         <div className="flex-shrink-0 w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center border-2 border-white/20">
                             <span className="text-2xl font-bold text-white">{avatarLetter}</span>
@@ -432,6 +442,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                         <div className="flex-shrink-0">
                             <StatusBadge status={statusLabel} />
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -718,6 +729,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                         <thead className="bg-white/5 text-xs uppercase tracking-wide text-white/60">
                                             <tr>
                                                 <th className="px-5 py-3 font-semibold">S.No</th>
+                                                <th className="px-5 py-3 font-semibold">User Id</th>
                                                 <th className="px-5 py-3 font-semibold">Name</th>
                                                 <th className="px-5 py-3 font-semibold">Phone</th>
                                                 <th className="px-5 py-3 font-semibold">Email</th>
@@ -730,6 +742,11 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                     <td className="px-5 py-4 text-white/80">
                                                         {index + 1}
                                                     </td>
+                                                    {idDevelopmentMode && (
+                                                    <td className="px-5 py-4">
+                                                        {member?.user?.id ?? member.userId ?? member.id ?? "—"}
+                                                    </td>
+                                                    )}
                                                     <td className="px-5 py-4 font-semibold text-white">
                                                         {member?.user?.name ?? member.memberName ?? member.name ?? "—"}
                                                     </td>
@@ -740,18 +757,18 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                         {member?.user?.email ?? member.email ?? "—"}
                                                     </td>
                                                     {/* <td className="px-5 py-4">
-                                                        {member?.user?.isDrawCompleted ? "Yes" : "No"}
+                                                        {member?.user?.isUserDrawCompleted ? "Yes" : "No"}
                                                     </td> */}
                                                     <td className="px-5 py-4">
                                                             <button
                                                                 type="button"
                                                                 className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                                                                    member?.user?.isDrawCompleted
+                                                                    member?.user?.isUserDrawCompleted
                                                                         ? "bg-green-500/20 text-green-300 hover:bg-green-500/30"
                                                                         : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
                                                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                                                             >
-                                                                {member?.user?.isDrawCompleted
+                                                                {member?.user?.isUserDrawCompleted
                                                                     ? "Yes"
                                                                     : "No"}
                                                             </button>
