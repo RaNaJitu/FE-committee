@@ -251,7 +251,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
                     />
                     <Route
                         path="committee/:committeeId"
-                        element={<CommitteeDetailsRoute token={token} profile={profile} onRefresh={refresh} onLogout={onLogout} />}
+                        element={<CommitteeDetailsRoute token={token} profile={profile} onRefresh={refresh} onLogout={onLogout} onOpenMobileNav={() => setIsMobileNavOpen(true)} />}
                     />
                     <Route
                         path="calendar"
@@ -339,7 +339,7 @@ export default function DashboardPage({ token, profile, onLogout }) {
 }
 
 // Component to handle committee details route
-function CommitteeDetailsRoute({ token, profile, onRefresh, onLogout }) {
+function CommitteeDetailsRoute({ token, profile, onRefresh, onLogout, onOpenMobileNav }) {
     const { committeeId } = useParams();
     const navigate = useNavigate();
     const { showToast } = useToast();
@@ -391,11 +391,11 @@ function CommitteeDetailsRoute({ token, profile, onRefresh, onLogout }) {
                 <DashboardHeader
                     profile={profile}
                     token={token}
-                    onOpenMobileNav={() => {}}
+                    onOpenMobileNav={onOpenMobileNav}
                     onViewProfile={() => navigate("/dashboard/profile")}
                     onLogout={onLogout}
                 />
-                <div className="pt-32 px-6 py-8 lg:px-12">
+                <div className="pt-24 sm:pt-28 lg:pt-32 px-4 py-4 sm:py-6 lg:px-12">
                     <div className="flex items-center justify-center min-h-[60vh]">
                         <div className="text-center">
                             <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-solid border-yellow-400 border-r-transparent"></div>
@@ -416,11 +416,11 @@ function CommitteeDetailsRoute({ token, profile, onRefresh, onLogout }) {
             <DashboardHeader
                 profile={profile}
                 token={token}
-                onOpenMobileNav={() => {}}
+                onOpenMobileNav={onOpenMobileNav}
                 onViewProfile={() => navigate("/dashboard/profile")}
                 onLogout={onLogout}
             />
-            <div className="pt-32 px-6 py-8 lg:px-12">
+            <div className="pt-24 sm:pt-28 lg:pt-32 px-4 py-4 sm:py-6 lg:px-12">
                 <CommitteeDetailsPage
                     committee={committee}
                     token={token}

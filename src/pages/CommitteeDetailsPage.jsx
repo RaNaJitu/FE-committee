@@ -102,7 +102,9 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 loadCommitteeAnalysis();
             }
         }
-        process.env.NODE_ENV === "DEVELOPMENT" && setIdDevelopmentMode(true);
+        
+        console.log( "NODE_ENV: ===>", process.env.NODE_ENV);
+        if(process.env.NODE_ENV === "PRODUCTION");
         setIdDevelopmentMode(true);
         // Cleanup debounce timer on unmount
         return () => {
@@ -406,75 +408,73 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
     const avatarLetter = committeeName.charAt(0).toUpperCase();
 
     return (
-        <div className="text-white px-4 py-6 sm:px-6 lg:px-12">
-            <div className="max-w-6xl mx-auto space-y-6 mt-8">
+        <div className="text-white mt-12">
+            <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 mt-8">
                 {/* Committee Info Card with Header Over Border */}
-                <div className="relative">
+                <div className="relative mt-2 sm:mt-4">
                     {/* Header positioned over the border */}
-                    <div className="absolute -top-3 left-6 z-10 ">
-                        <span className="bg-slate-950 px-3 text-xl sm:text-2xl font-semibold text-white">
+                    <div className="absolute -top-2.5 sm:-top-3 left-3 sm:left-4 md:left-6 z-10 ">
+                        <span className="bg-slate-950 px-2 sm:px-3 text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-white">
                             Committee details
                         </span>
                     </div>
                     
                     {/* Committee Info Card */}
-                    <div className="rounded-2xl border border-white/10 p-6 shadow-lg shadow-black/30">
-                    {/* <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-900/30 to-purple-800/20 p-6 shadow-lg shadow-black/30"> */}
-                        <div className="flex items-center gap-4">
-                        {/* Avatar */}
-                        <div className="flex-shrink-0 w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center border-2 border-white/20">
-                            <span className="text-2xl font-bold text-white">{avatarLetter}</span>
-                        </div>
-                        
-                        {/* Committee Info */}
-                        <div className="flex-1 min-w-0">
-                            <h2 className="text-xl sm:text-2xl font-semibold text-white mb-2">
-                                {committeeName}
-                            </h2>
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/90">
-                                <span>Amount: {typeof amount === "number" ? amount.toLocaleString() : amount}</span>
-                                <span>Max Members: {maxMembers}</span>
-                                <span>Start: {startDate}</span>
-                            </div>
-                        </div>
-                        
-                        {/* Status Badge */}
-                        <div className="flex-shrink-0">
+                    <div className="rounded-xl sm:rounded-2xl border border-white/10 p-4 ">
+                        {/* Status Badge - Top Right */}
+                        <div className="absolute top-4 right-4 sm:top-5 sm:right-5 md:top-6 md:right-6">
                             <StatusBadge status={statusLabel} />
                         </div>
-                    </div>
+                        
+                        <div className="flex items-start gap-4 sm:gap-5 pr-20 sm:pr-24">
+                            {/* Avatar */}
+                            <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-20 rounded-full bg-purple-900/80 flex items-center justify-center border border-purple-700/50 shadow-lg">
+                                <span className="text-2xl sm:text-3xl font-bold text-white">{avatarLetter}</span>
+                            </div>
+                            
+                            {/* Committee Info */}
+                            <div className="flex-1 min-w-0">
+                                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 sm:mb-3 break-words">
+                                    {committeeName}
+                                </h2>
+                                <div className="flex flex-col gap-1 text-sm sm:text-base text-white/95">
+                                    <span>Amount: {typeof amount === "number" ? amount.toLocaleString() : amount}</span>
+                                    <span>Max Members: {maxMembers}</span>
+                                    <span>Start: {startDate}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex gap-2 border-b border-white/10">
-                    
+                <div className="flex gap-1 sm:gap-2 border-b border-white/10 overflow-x-auto scrollbar-hide -mx-4 sm:mx-0 px-4 sm:px-0">
                     <button
                         onClick={() => setActiveTab("members")}
-                        className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${
+                        className={`px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base font-medium rounded-t-lg transition whitespace-nowrap flex-shrink-0 ${
                             activeTab === "members"
-                                ? "bg-yellow-400 text-slate-900"
-                                : "text-white/70 hover:text-white"
+                                ? "bg-yellow-400 text-slate-900 font-semibold"
+                                : "text-white/70 hover:text-white hover:bg-white/5"
                         }`}
                     >
                         Members
                     </button>
                     <button
                         onClick={() => setActiveTab("draws")}
-                        className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${
+                        className={`px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base font-medium rounded-t-lg transition whitespace-nowrap flex-shrink-0 ${
                             activeTab === "draws"
-                                ? "bg-yellow-400 text-slate-900"
-                                : "text-white/70 hover:text-white"
+                                ? "bg-yellow-400 text-slate-900 font-semibold"
+                                : "text-white/70 hover:text-white hover:bg-white/5"
                         }`}
                     >
                         Committee Draw
                     </button>
                     <button
                         onClick={() => setActiveTab("analysis")}
-                        className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${
+                        className={`px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base font-medium rounded-t-lg transition whitespace-nowrap flex-shrink-0 ${
                             activeTab === "analysis"
-                                ? "bg-yellow-400 text-slate-900"
-                                : "text-white/70 hover:text-white"
+                                ? "bg-yellow-400 text-slate-900 font-semibold"
+                                : "text-white/70 hover:text-white hover:bg-white/5"
                         }`}
                     >
                         Analysis
@@ -482,7 +482,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 </div>
 
                 {/* Tab Content */}
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30">
+                <div className="rounded-xl sm:rounded-2xl md:rounded-3xl border border-white/10 bg-white/5 p-4 sm:p-5 md:p-6 shadow-lg shadow-black/30">
                     {activeTab === "draws" && (
                         <>
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -609,20 +609,20 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                 className="transition hover:bg-white/5 cursor-pointer"
                                                 onClick={() => handleDrawRowClick(draw)}
                                             >
-                                                <td className="px-5 py-4 text-white/80">
+                                                <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 text-white/80 whitespace-nowrap">
                                                     {index + 1}
                                                 </td>
-                                                <td className="px-5 py-4">
+                                                <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 whitespace-nowrap">
                                                     {formattedDate}
                                                 </td>
-                                                <td className="px-5 py-4">
+                                                <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 whitespace-nowrap">
                                                     {formattedTime}
                                                 </td>
-                                                <td className="px-5 py-4">
+                                                <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 whitespace-nowrap">
                                                     {minAmount}
                                                 </td>
                                                 {isAdmin ? (
-                                                    <td className="px-5 py-4 font-semibold text-white">
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold text-white">
                                                         <input
                                                             className="w-24 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                                             name="drawAmount"
@@ -643,12 +643,12 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                         />
                                                     </td>
                                                 ) : (
-                                                    <td className="px-5 py-4 font-semibold text-white">
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold text-white whitespace-nowrap">
                                                         {drawAmount}
                                                     </td>
                                                 )}
                                                 {isAdmin && committee.committeeType !== "LOTTERY" && (
-                                                    <td className="px-5 py-4 text-center">
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 text-center">
                                                         {canOpenTimer ? (
                                                             <Button
                                                                 variant="secondary"
@@ -680,15 +680,15 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
 
                     {activeTab === "members" && (
                         <>
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                                <div>
-                                    <h2 className="text-lg font-semibold text-white">Committee Members</h2>
-                                    <p className="text-sm text-white/60 mt-1">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+                                <div className="flex-1 min-w-0">
+                                    <h2 className="text-base sm:text-lg font-semibold text-white">Committee Members</h2>
+                                    <p className="text-xs sm:text-sm text-white/60 mt-0.5 sm:mt-1">
                                         {membersList.length} member{membersList.length !== 1 ? "s" : ""} in this committee
                                     </p>
                                 </div>
                                 {isAdmin && (
-                                    <Button variant="primary" onClick={handleAddMember}>
+                                    <Button variant="primary" onClick={handleAddMember} className="w-full sm:w-auto flex-shrink-0">
                                         Add Member
                                     </Button>
                                 )}
@@ -724,55 +724,54 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-950/30">
-                                    <table className="min-w-full divide-y divide-white/10 text-left text-sm text-white/80">
+                                <div className="overflow-x-auto rounded-lg sm:rounded-xl border border-white/10 bg-slate-950/30 -mx-4 sm:mx-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+                                    <table className="min-w-full divide-y divide-white/10 text-left text-xs sm:text-sm text-white/80">
                                         <thead className="bg-white/5 text-xs uppercase tracking-wide text-white/60">
                                             <tr>
-                                                <th className="px-5 py-3 font-semibold">S.No</th>
-                                                <th className="px-5 py-3 font-semibold">User Id</th>
-                                                <th className="px-5 py-3 font-semibold">Name</th>
-                                                <th className="px-5 py-3 font-semibold">Phone</th>
-                                                <th className="px-5 py-3 font-semibold">Email</th>
-                                                <th className="px-5 py-3 font-semibold">draw completed</th>
+                                                <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">S.No</th>
+                                                {idDevelopmentMode && (
+                                                    <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">User Id</th>
+                                                )}
+                                                <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">Name</th>
+                                                <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">Phone</th>
+                                                <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">Email</th>
+                                                <th className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold whitespace-nowrap">draw completed</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
                                             {membersList.map((member, index) => (
                                                 <tr key={member.id ?? index} className="transition hover:bg-white/5">
-                                                    <td className="px-5 py-4 text-white/80">
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 text-white/80 whitespace-nowrap">
                                                         {index + 1}
                                                     </td>
                                                     {idDevelopmentMode && (
-                                                    <td className="px-5 py-4">
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 whitespace-nowrap">
                                                         {member?.user?.id ?? member.userId ?? member.id ?? "—"}
                                                     </td>
                                                     )}
-                                                    <td className="px-5 py-4 font-semibold text-white">
-                                                        {member?.user?.name ?? member.memberName ?? member.name ?? "—"}
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold text-white">
+                                                        <span className="truncate block max-w-[120px] sm:max-w-none">{member?.user?.name ?? member.memberName ?? member.name ?? "—"}</span>
                                                     </td>
-                                                    <td className="px-5 py-4">
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 whitespace-nowrap">
                                                         {member?.user?.phoneNo ?? member.phone ?? member.phoneNo ?? "—"}
                                                     </td>
-                                                    <td className="px-5 py-4">
-                                                        {member?.user?.email ?? member.email ?? "—"}
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3">
+                                                        <span className="truncate block max-w-[150px] sm:max-w-none">{member?.user?.email ?? member.email ?? "—"}</span>
                                                     </td>
-                                                    {/* <td className="px-5 py-4">
-                                                        {member?.user?.isUserDrawCompleted ? "Yes" : "No"}
-                                                    </td> */}
-                                                    <td className="px-5 py-4">
-                                                            <button
-                                                                type="button"
-                                                                className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                                                                    member?.user?.isUserDrawCompleted
-                                                                        ? "bg-green-500/20 text-green-300 hover:bg-green-500/30"
-                                                                        : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
-                                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                            >
-                                                                {member?.user?.isUserDrawCompleted
-                                                                    ? "Yes"
-                                                                    : "No"}
-                                                            </button>
-                                                        </td>
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3">
+                                                        <button
+                                                            type="button"
+                                                            className={`inline-flex items-center rounded-md px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium transition whitespace-nowrap ${
+                                                                member?.user?.isUserDrawCompleted
+                                                                    ? "bg-green-500/20 text-green-300 hover:bg-green-500/30"
+                                                                    : "bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                                                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                        >
+                                                            {member?.user?.isUserDrawCompleted
+                                                                ? "Yes"
+                                                                : "No"}
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -802,11 +801,11 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                     </Button>
                                 </div>
                             ) : analysisData ? (
-                                <div className="rounded-2xl ">
+                                <div className="rounded-2xl">
                                 {/* <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-900/30 to-purple-800/20 p-6 shadow-lg shadow-black/30"> */}
-                                    <h2 className="text-xl font-semibold text-white mb-6">Analysis</h2>
+                                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 sm:mb-6">Analysis</h2>
                                     
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                         {/* Total members */}
                                         <div className="space-y-1">
                                             <label className="text-sm font-medium text-white/70">Total members</label>
