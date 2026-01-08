@@ -215,14 +215,27 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
             return;
         }
 
+        // Ensure members are loaded
+        if (membersList.length === 0) {
+            loadCommitteeMembers();
+            showToast({
+                title: "Loading Members",
+                description: "Please wait while we load the member list...",
+                variant: "info",
+            });
+            return;
+        }
+
         setIsLoadingLottery(true);
         setLotteryResult(null);
         setIsLotteryModalOpen(true);
 
+        // Get lottery result immediately (modal will handle 5-second animation)
         getLotteryRandomUser(token, committee.id)
             .then((response) => {
                 const result = response?.data ?? response ?? null;
                 setLotteryResult(result);
+                // Modal will handle the 5-second animation before showing result
             })
             .catch((err) => {
                 showToast({
@@ -231,9 +244,8 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                     variant: "error",
                 });
                 setIsLotteryModalOpen(false);
-            })
-            .finally(() => {
                 setIsLoadingLottery(false);
+                setLotteryResult(null);
             });
     };
 
@@ -1024,6 +1036,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 onSubmit={handleLotterySubmit}
                 onCancel={handleLotteryCancel}
                 isSubmitting={isSubmittingLottery}
+                membersList={membersList}
             />
         </div>
     );
