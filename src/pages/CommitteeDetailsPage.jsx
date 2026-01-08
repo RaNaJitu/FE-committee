@@ -8,6 +8,7 @@ import { CommitteeMembersModal } from "../components/committee/CommitteeMembersM
 import { DrawMembersModal } from "../components/committee/DrawMembersModal.jsx";
 import { DrawTimerModal } from "../components/committee/DrawTimerModal.jsx";
 import { LotteryResultModal } from "../components/committee/LotteryResultModal.jsx";
+import { LotteryWheelModal } from "../components/committee/LotteryWheelModal.jsx";
 
 export const formatDrawDate = (value) => {
     if (!value) return "—";
@@ -1038,6 +1039,17 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 isSubmitting={isSubmittingLottery}
                 membersList={membersList}
             />
+
+            {/* Lottery Wheel Modal */}
+            {/* <LotteryWheelModal
+                isOpen={isLotteryModalOpen}
+                onClose={handleLotteryCancel}
+                committee={committee}
+                token={token}
+                onSubmit={handleLotterySubmit}
+                onCancel={handleLotteryCancel}
+                isSubmitting={isSubmittingLottery}
+            /> */}
         </div>
     );
 }
