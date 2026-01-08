@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "../context/ToastContext.jsx";
-import { addCommitteeMember, getCommitteeDraws, updateDrawAmount, getCommitteeMembers, getCommitteeAnalysis } from "../services/apiClient.js";
+import { addCommitteeMember, getCommitteeDraws, updateDrawAmount, getCommitteeMembers, getCommitteeAnalysis, getLotteryRandomUser } from "../services/apiClient.js";
 import { Button } from "../components/ui/Button.jsx";
 import { StatusBadge } from "../components/committee/StatusBadge.jsx";
 import { AddCommitteeMemberModal } from "../components/committee/AddCommitteeMemberModal.jsx";
 import { CommitteeMembersModal } from "../components/committee/CommitteeMembersModal.jsx";
 import { DrawMembersModal } from "../components/committee/DrawMembersModal.jsx";
 import { DrawTimerModal } from "../components/committee/DrawTimerModal.jsx";
+import { LotteryResultModal } from "../components/committee/LotteryResultModal.jsx";
 
 export const formatDrawDate = (value) => {
     if (!value) return "—";
@@ -86,6 +87,10 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
     const [isUpdatingAmount, setIsUpdatingAmount] = useState(false);
     const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
     const [timerDraw, setTimerDraw] = useState(null);
+    const [isLotteryModalOpen, setIsLotteryModalOpen] = useState(false);
+    const [lotteryResult, setLotteryResult] = useState(null);
+    const [isLoadingLottery, setIsLoadingLottery] = useState(false);
+    const [isSubmittingLottery, setIsSubmittingLottery] = useState(false);
     const debounceTimerRef = useRef(null);
 
     const [idDevelopmentMode, setIdDevelopmentMode] = useState(false);
@@ -198,6 +203,64 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
     };
     const handleGetMemberList = () => {
         setIsGetMemberListModalOpen(true);
+    };
+
+    const handleStartLotteryDraw = () => {
+        if (!committee?.id || !token) {
+            showToast({
+                title: "Error",
+                description: "Committee ID or authentication token is missing.",
+                variant: "error",
+            });
+            return;
+        }
+
+        setIsLoadingLottery(true);
+        setLotteryResult(null);
+        setIsLotteryModalOpen(true);
+
+        getLotteryRandomUser(token, committee.id)
+            .then((response) => {
+                const result = response?.data ?? response ?? null;
+                setLotteryResult(result);
+            })
+            .catch((err) => {
+                showToast({
+                    title: "Lottery Draw Failed",
+                    description: err.message || "Failed to draw lottery winner.",
+                    variant: "error",
+                });
+                setIsLotteryModalOpen(false);
+            })
+            .finally(() => {
+                setIsLoadingLottery(false);
+            });
+    };
+
+    const handleLotterySubmit = () => {
+        setIsSubmittingLottery(true);
+        // Here you can add any additional logic when submitting the lottery result
+        // For example, saving the result or triggering a refresh
+        setTimeout(() => {
+            showToast({
+                title: "Lottery Draw Completed",
+                description: "The lottery draw has been successfully recorded.",
+                variant: "success",
+            });
+            setIsSubmittingLottery(false);
+            setIsLotteryModalOpen(false);
+            setLotteryResult(null);
+            // Refresh the draws list if needed
+            if (onRefresh) {
+                onRefresh();
+            }
+            loadCommitteeDraws();
+        }, 500);
+    };
+
+    const handleLotteryCancel = () => {
+        setIsLotteryModalOpen(false);
+        setLotteryResult(null);
     };
 
     const handleDrawAmountChange = (drawId, currentAmount) => {
@@ -400,6 +463,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
             year: "numeric",
         })
         : "—";
+    const committeeType = committee.committeeType ?? committee.type ?? "—";
     const statusLabel = committee.committeeStatus ?? committee.status ?? committee.state ?? "INACTIVE";
     const userRole = profile?.data?.role ?? profile?.role ?? "";
     const isAdmin = userRole === "ADMIN";
@@ -413,14 +477,14 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 {/* Committee Info Card with Header Over Border */}
                 <div className="relative mt-2 sm:mt-4">
                     {/* Header positioned over the border */}
-                    <div className="absolute -top-2.5 sm:-top-3 left-3 sm:left-4 md:left-6 z-10 ">
+                    <div className="absolute -top-2.5 sm:-top-3 left-3 sm:left-4 md:left-6 z-10  ">
                         <span className="bg-slate-950 px-2 sm:px-3 text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-white">
                             Committee details
                         </span>
                     </div>
                     
                     {/* Committee Info Card */}
-                    <div className="rounded-xl sm:rounded-2xl border border-white/10 p-4 ">
+                    <div className="rounded-xl sm:rounded-2xl border border-white/10 p-10 md:top-24 ">
                         {/* Status Badge - Top Right */}
                         <div className="absolute top-4 right-4 sm:top-5 sm:right-5 md:top-6 md:right-6">
                             <StatusBadge status={statusLabel} />
@@ -428,7 +492,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                         
                         <div className="flex items-start gap-4 sm:gap-5 pr-20 sm:pr-24">
                             {/* Avatar */}
-                            <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-20 rounded-full bg-purple-900/80 flex items-center justify-center border border-purple-700/50 shadow-lg">
+                            <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-purple-900/80 flex items-center justify-center border border-purple-700/50 shadow-lg">
                                 <span className="text-2xl sm:text-3xl font-bold text-white">{avatarLetter}</span>
                             </div>
                             
@@ -437,10 +501,11 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2 sm:mb-3 break-words">
                                     {committeeName}
                                 </h2>
-                                <div className="flex flex-col gap-1 text-sm sm:text-base text-white/95">
+                                <div className="flex justify-between gap-1 text-sm sm:text-base text-white/95">
+                                    {/* <span>Start: {startDate}</span> */}
+                                    <span>Committee Type: {committeeType}</span>
                                     <span>Amount: {typeof amount === "number" ? amount.toLocaleString() : amount}</span>
                                     <span>Max Members: {maxMembers}</span>
-                                    <span>Start: {startDate}</span>
                                 </div>
                             </div>
                         </div>
@@ -491,7 +556,13 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                     <p className="text-sm text-white/60 mt-1">
                                         {committeeDrawsList.length} draw{committeeDrawsList.length !== 1 ? "s" : ""} recorded for this committee
                                     </p>
+                                    
                                 </div>
+                                {isAdmin && committee.committeeType === "LOTTERY" && (
+                                        <Button variant="primary" onClick={handleStartLotteryDraw}>
+                                            Start Lottery Draw
+                                        </Button>
+                                    )}
                                 {/* <div className="flex flex-wrap gap-3">
                                     <Button variant="secondary" onClick={handleGetMemberList}>
                                         Get member list
@@ -942,6 +1013,17 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                 }}
                 draw={timerDraw}
                 committeeName={committeeName}
+            />
+            
+            {/* Lottery Result Modal */}
+            <LotteryResultModal
+                isOpen={isLotteryModalOpen}
+                onClose={handleLotteryCancel}
+                lotteryResult={lotteryResult}
+                isLoading={isLoadingLottery}
+                onSubmit={handleLotterySubmit}
+                onCancel={handleLotteryCancel}
+                isSubmitting={isSubmittingLottery}
             />
         </div>
     );

@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
             AMOUNT_UPDATE: "api/v1/draw/amount-update",
             USER_WISE_PAID: "api/v1/draw/user-wise-paid",
             USER_WISE_COMPLETED: "api/v1/draw/user-wise-completed",
+            LOTTERY_RANDOM_USER: "api/v1/draw/lottery-random-user",
         },
     },
 };

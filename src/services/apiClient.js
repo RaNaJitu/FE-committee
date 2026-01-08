@@ -296,3 +296,12 @@ export async function toggleDrawCompleted(token, data) {
         body: JSON.stringify(cleanData),
     });
 }
+
+export async function getLotteryRandomUser(token, committeeId) {
+    return request(`${API.COMMITTEE.DRAW.LOTTERY_RANDOM_USER}?committeeId=${committeeId}`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+}
