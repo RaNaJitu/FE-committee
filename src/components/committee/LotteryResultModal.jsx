@@ -95,9 +95,7 @@ export function LotteryResultModal({
                     setScrollPosition(targetPosition);
                 }
                 setIsScrolling(false);
-                setTimeout(() => {
-                    setShowResult(true);
-                }, 500);
+                setShowResult(true);
             }
         };
 
@@ -140,7 +138,7 @@ export function LotteryResultModal({
                 </div>
             }
         >
-            {isLoading && !showResult ? (
+            {isLoading && isScrolling ? (
                 <div className="space-y-4">
                     <div className="text-center">
                         <p className="text-sm text-white/60 mb-4">Selecting winner...</p>

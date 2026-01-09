@@ -206,7 +206,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
         setIsGetMemberListModalOpen(true);
     };
 
-    const handleStartLotteryDraw = (draw = null) => {
+    const handleStartLotteryDraw = async (draw = null) => {
         if (!committee?.id || !token) {
             showToast({
                 title: "Error",
@@ -220,8 +220,31 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
         if (draw) {
             setSelectedDraw(draw);
         }
-
+        
+        setIsLoadingLottery(true);
+        setLotteryResult(null);
         setIsLotteryModalOpen(true);
+
+        // Call the lottery API
+        try {
+            const response = await getLotteryRandomUser(token, committee.id);
+            const result = response?.data ?? response ?? null;
+            setLotteryResult(result);
+            
+            // Keep loading state for 5 seconds to allow scrolling animation to complete
+            // The modal will handle showing the result immediately after animation
+            setTimeout(() => {
+                setIsLoadingLottery(false);
+            }, 5000);
+        } catch (err) {
+            showToast({
+                title: "Failed to get lottery winner",
+                description: err.message || "Unable to fetch lottery result.",
+                variant: "error",
+            });
+            setLotteryResult(null);
+            setIsLoadingLottery(false);
+        }
     };
 
     const handleLotterySubmit = () => {
@@ -741,7 +764,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                                 size="sm"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    handleStartLotteryDraw(draw);
+                                                                    handleStartLotteryDraw();
                                                                 }}
                                                                 disabled={isDrawCompleted}
                                                             >
