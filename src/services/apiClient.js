@@ -305,3 +305,21 @@ export async function getLotteryRandomUser(token, committeeId) {
         },
     });
 }
+
+export async function updateLotteryResult(token, data) {
+    const cleanData = {
+        committeeId: data.committeeId,
+        userId: data.userId,
+        drawId: data.drawId,
+        userDrawAmountPaid: data.userDrawAmountPaid,
+    };
+
+    return request(API.COMMITTEE.DRAW.LOTTERY_RESULT_UPDATE, {
+        method: "PATCH",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(cleanData),
+    });
+}

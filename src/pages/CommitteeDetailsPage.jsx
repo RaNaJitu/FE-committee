@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "../context/ToastContext.jsx";
-import { addCommitteeMember, getCommitteeDraws, updateDrawAmount, getCommitteeMembers, getCommitteeAnalysis, getLotteryRandomUser } from "../services/apiClient.js";
+import { addCommitteeMember, getCommitteeDraws, updateDrawAmount, getCommitteeMembers, getCommitteeAnalysis, getLotteryRandomUser, updateLotteryResult } from "../services/apiClient.js";
 import { Button } from "../components/ui/Button.jsx";
 import { StatusBadge } from "../components/committee/StatusBadge.jsx";
 import { AddCommitteeMemberModal } from "../components/committee/AddCommitteeMemberModal.jsx";
@@ -247,25 +247,60 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
         }
     };
 
-    const handleLotterySubmit = () => {
+    const handleLotterySubmit = async () => {
+        if (!token || !lotteryResult || !selectedDraw || !committee?.id) {
+            showToast({
+                title: "Error",
+                description: "Missing required information to submit lottery result.",
+                variant: "error",
+            });
+            return;
+        }
+
         setIsSubmittingLottery(true);
-        // Here you can add any additional logic when submitting the lottery result
-        // For example, saving the result or triggering a refresh
-        setTimeout(() => {
+
+        try {
+            // Get the winner's user ID
+            const userId = lotteryResult?.id ?? lotteryResult?.userId ?? lotteryResult?.user?.id;
+            const drawId = selectedDraw?.id ?? selectedDraw?.committeeDrawId ?? selectedDraw?.drawId;
+            const userDrawAmountPaid = selectedDraw?.committeeDrawsAmount ?? selectedDraw?.committeeDrawAmount ?? selectedDraw?.amount ?? 0;
+
+            if (!userId || !drawId) {
+                throw new Error("Missing user ID or draw ID");
+            }
+
+            // Call the API to update lottery result
+            await updateLotteryResult(token, {
+                committeeId: committee.id,
+                userId: userId,
+                drawId: drawId,
+                userDrawAmountPaid: userDrawAmountPaid,
+            });
+
             showToast({
                 title: "Lottery Draw Completed",
                 description: "The lottery draw has been successfully recorded.",
                 variant: "success",
             });
+
             setIsSubmittingLottery(false);
             setIsLotteryModalOpen(false);
             setLotteryResult(null);
-            // Refresh the draws list if needed
+            setSelectedDraw(null);
+            
+            // Refresh the draws list
             if (onRefresh) {
                 onRefresh();
             }
             loadCommitteeDraws();
-        }, 500);
+        } catch (err) {
+            showToast({
+                title: "Failed to submit lottery result",
+                description: err.message || "Unable to update lottery result.",
+                variant: "error",
+            });
+            setIsSubmittingLottery(false);
+        }
     };
 
     const handleLotteryCancel = () => {
@@ -764,7 +799,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                                 size="sm"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    handleStartLotteryDraw();
+                                                                    handleStartLotteryDraw(draw);
                                                                 }}
                                                                 disabled={isDrawCompleted}
                                                             >
