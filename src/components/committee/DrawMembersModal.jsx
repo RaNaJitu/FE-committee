@@ -162,6 +162,13 @@ export function DrawMembersModal({
     );
     const defaultDrawAmountValue = useMemo(() => sanitizeAmount(drawAmount), [drawAmount]);
     const drawId = draw?.id ?? draw?.committeeDrawId ?? draw?.drawId;
+    
+    // Check if draw is completed
+    const isDrawCompleted = 
+        draw?.isDrawCompleted === true || 
+        draw?.drawStatus === "COMPLETED" || 
+        draw?.status === "COMPLETED" ||
+        draw?.isCompleted === true;
 
     const handleToggleDrawCompleted = async (member) => {
         if (!committee?.id || !token || !drawId) {
@@ -368,7 +375,7 @@ export function DrawMembersModal({
                                                 <th className="px-5 py-3 font-semibold">Final Amount</th>
                                                 <th className="px-5 py-3 font-semibold">Total Paid Amount</th>
                                                 <th className="px-5 py-3 font-semibold">Draw completed</th>
-                                                {isAdmin && (
+                                                {isAdmin && !isDrawCompleted && (
                                                     <th className="px-5 py-3 font-semibold text-right">Action</th>
                                                 )}
                                                 
@@ -421,19 +428,19 @@ export function DrawMembersModal({
                                                                     : "No"}
                                                             </button>
                                                         </td>
-                                                        {isAdmin && (
+                                                        {isAdmin && !isDrawCompleted && (
                                                             <td className="px-5 py-4 text-right">
-                                                            <Button
-                                                                variant="secondary"
-                                                                size="sm"
-                                                                disabled={payingMemberId === userId}
-                                                                onClick={() => handleMarkPaid(member)}
-                                                            >
-                                                                {payingMemberId === userId
-                                                                    ? "Processing..."
-                                                                    : "Mark Paid"}
-                                                            </Button>
-                                                        </td>
+                                                                <Button
+                                                                    variant="secondary"
+                                                                    size="sm"
+                                                                    disabled={payingMemberId === userId}
+                                                                    onClick={() => handleMarkPaid(member)}
+                                                                >
+                                                                    {payingMemberId === userId
+                                                                        ? "Processing..."
+                                                                        : "Mark Paid"}
+                                                                </Button>
+                                                            </td>
                                                         )}
                                                         
                                                     </tr>

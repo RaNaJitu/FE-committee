@@ -206,7 +206,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
         setIsGetMemberListModalOpen(true);
     };
 
-    const handleStartLotteryDraw = () => {
+    const handleStartLotteryDraw = (draw = null) => {
         if (!committee?.id || !token) {
             showToast({
                 title: "Error",
@@ -216,38 +216,12 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
             return;
         }
 
-        // Ensure members are loaded
-        if (membersList.length === 0) {
-            loadCommitteeMembers();
-            showToast({
-                title: "Loading Members",
-                description: "Please wait while we load the member list...",
-                variant: "info",
-            });
-            return;
+        // Store the draw for the lottery modal if provided
+        if (draw) {
+            setSelectedDraw(draw);
         }
 
-        setIsLoadingLottery(true);
-        setLotteryResult(null);
         setIsLotteryModalOpen(true);
-
-        // Get lottery result immediately (modal will handle 5-second animation)
-        getLotteryRandomUser(token, committee.id)
-            .then((response) => {
-                const result = response?.data ?? response ?? null;
-                setLotteryResult(result);
-                // Modal will handle the 5-second animation before showing result
-            })
-            .catch((err) => {
-                showToast({
-                    title: "Lottery Draw Failed",
-                    description: err.message || "Failed to draw lottery winner.",
-                    variant: "error",
-                });
-                setIsLotteryModalOpen(false);
-                setIsLoadingLottery(false);
-                setLotteryResult(null);
-            });
     };
 
     const handleLotterySubmit = () => {
@@ -571,11 +545,6 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                     </p>
                                     
                                 </div>
-                                {isAdmin && committee.committeeType === "LOTTERY" && (
-                                        <Button variant="primary" onClick={handleStartLotteryDraw}>
-                                            Start Lottery Draw
-                                        </Button>
-                                    )}
                                 {/* <div className="flex flex-wrap gap-3">
                                     <Button variant="secondary" onClick={handleGetMemberList}>
                                         Get member list
@@ -629,6 +598,9 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                         {isAdmin && committee.committeeType !== "LOTTERY" && (
                                             <th className="px-5 py-3 font-semibold text-center">Timer</th>
                                         )}
+                                        {isAdmin && committee.committeeType === "LOTTERY" && (
+                                            <th className="px-5 py-3 font-semibold text-center">Action</th>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
@@ -650,6 +622,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
 
                                         // Determine if the current time is after the draw's scheduled date & time
                                         let canOpenTimer = false;
+                                        let isDrawStarted = false;
                                         if (rawDate) {
                                             const startDate = new Date(rawDate);
                                             if (!Number.isNaN(startDate.getTime())) {
@@ -667,8 +640,16 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                 }
                                                 const now = new Date();
                                                 canOpenTimer = now >= startDate;
+                                                isDrawStarted = now >= startDate;
                                             }
                                         }
+
+                                        // Check if draw is completed
+                                        const isDrawCompleted = 
+                                            draw?.isDrawCompleted === true || 
+                                            draw?.drawStatus === "COMPLETED" || 
+                                            draw?.status === "COMPLETED" ||
+                                            draw?.isCompleted === true;
 
                                         const isEditing = editingDrawId === draw.id;
                                         const displayAmount = isEditing ? editingAmount : drawAmount;
@@ -744,6 +725,27 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                                 }}
                                                             >
                                                                 Open Timer
+                                                            </Button>
+                                                        ) : (
+                                                            <span className="text-xs font-medium text-white/40 italic">
+                                                                Draw not started yet
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                )}
+                                                {isAdmin && committee.committeeType === "LOTTERY" && (
+                                                    <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 text-center">
+                                                        {isDrawStarted ? (
+                                                            <Button
+                                                                variant="primary"
+                                                                size="sm"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleStartLotteryDraw(draw);
+                                                                }}
+                                                                disabled={isDrawCompleted}
+                                                            >
+                                                                Start Lottery Draw
                                                             </Button>
                                                         ) : (
                                                             <span className="text-xs font-medium text-white/40 italic">
