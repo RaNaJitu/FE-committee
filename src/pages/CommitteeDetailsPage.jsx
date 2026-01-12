@@ -260,10 +260,11 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
         setIsSubmittingLottery(true);
 
         try {
+            
             // Get the winner's user ID
-            const userId = lotteryResult?.id ?? lotteryResult?.userId ?? lotteryResult?.user?.id;
-            const drawId = selectedDraw?.id ?? selectedDraw?.committeeDrawId ?? selectedDraw?.drawId;
-            const userDrawAmountPaid = selectedDraw?.committeeDrawsAmount ?? selectedDraw?.committeeDrawAmount ?? selectedDraw?.amount ?? 0;
+            const userId = lotteryResult?.userId;
+            const drawId = selectedDraw?.id;
+            const userDrawAmountPaid = selectedDraw?.committeeDrawAmount  ?? 0;
 
             if (!userId || !drawId) {
                 throw new Error("Missing user ID or draw ID");

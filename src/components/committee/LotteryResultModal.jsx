@@ -202,10 +202,10 @@ export function LotteryResultModal({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-xs font-semibold uppercase tracking-wide text-white/50">
-                                        ID
+                                        UserID
                                     </label>
                                     <p className="text-sm text-white/90 font-medium">
-                                        {lotteryResult?.id ?? lotteryResult?.userId ?? lotteryResult?.user?.id ?? "—"}
+                                            {lotteryResult?.userId ?? "—"}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
@@ -213,7 +213,7 @@ export function LotteryResultModal({
                                         Name
                                     </label>
                                     <p className="text-sm text-white/90 font-medium">
-                                        {lotteryResult?.name ?? lotteryResult?.user?.name ?? lotteryResult?.userName ?? "—"}
+                                        {lotteryResult?.name ?? "—"}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
@@ -221,7 +221,7 @@ export function LotteryResultModal({
                                         Phone Number
                                     </label>
                                     <p className="text-sm text-white/90 font-medium">
-                                        {lotteryResult?.phoneNo ?? lotteryResult?.phone ?? lotteryResult?.user?.phoneNo ?? "—"}
+                                        {lotteryResult?.phoneNo ?? "—"}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
@@ -229,7 +229,7 @@ export function LotteryResultModal({
                                         Email
                                     </label>
                                     <p className="text-sm text-white/90 font-medium">
-                                        {lotteryResult?.email ?? lotteryResult?.user?.email ?? "—"}
+                                        {lotteryResult?.email ??"—"}
                                     </p>
                                 </div>
                             </div>
