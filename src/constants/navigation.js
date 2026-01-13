@@ -1,8 +1,7 @@
 export const navigation = [
-    { label: "Overview", id: "overview" },
     { label: "Committees", id: "committees" },
-    // { label: "Projects", id: "projects" },
     { label: "Calendar", id: "calendar" },
+    { label: "Overview", id: "overview" },
     { label: "Documents", id: "documents" },
 ];
 

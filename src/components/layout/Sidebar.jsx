@@ -10,20 +10,28 @@ export function Sidebar({ activeNav }) {
             case "committees":
                 return "/dashboard";
             case "calendar":
-                return "/dashboard/calendar";
+                return "/calendar";
             case "profile":
-                return "/dashboard/profile";
+                return "/profile";
+            case "documents":
+                return "/documents";
+            case "overview":
+                return "/overview";
             default:
                 return "/dashboard";
         }
     };
     
     // Determine active nav from location
-    const currentActiveNav = location.pathname.includes("/profile")
+    const currentActiveNav = location.pathname === "/profile" || location.pathname.startsWith("/profile/")
         ? "profile"
-        : location.pathname.includes("/calendar")
+        : location.pathname === "/calendar" || location.pathname.startsWith("/calendar/")
         ? "calendar"
-        : location.pathname.includes("/committee/")
+        : location.pathname === "/overview" || location.pathname.startsWith("/overview/")
+        ? "overview"
+        : location.pathname === "/documents" || location.pathname.startsWith("/documents/")
+        ? "documents"
+        : location.pathname === "/committees" || location.pathname.startsWith("/committees/") || location.pathname.startsWith("/dashboard")
         ? "committees"
         : "committees";
 

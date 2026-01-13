@@ -6,7 +6,11 @@ export const ROUTES = {
     ROOT: "/",
     LOGIN: "/login",
     DASHBOARD: "/dashboard",
-    PROFILE: "/dashboard/profile",
+    COMMITTEES: "/committees",
+    PROFILE: "/profile",
+    CALENDAR: "/calendar",
+    DOCUMENTS: "/documents",
+    OVERVIEW: "/overview",
     CALENDAR: "/dashboard/calendar",
     COMMITTEE_DETAILS: (id) => `/dashboard/committee/${id}`,
 };
@@ -19,7 +23,7 @@ export const NAVIGATION_ROUTES = {
     committees: ROUTES.DASHBOARD,
     calendar: ROUTES.CALENDAR,
     profile: ROUTES.PROFILE,
-    overview: ROUTES.DASHBOARD,
-    documents: ROUTES.DASHBOARD,
+    overview: ROUTES.COMMITTEES,
+    documents: ROUTES.DOCUMENTS,
 };
 
