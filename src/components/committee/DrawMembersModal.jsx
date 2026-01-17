@@ -131,7 +131,7 @@ export function DrawMembersModal({
         };
     }, [isOpen, committee?.id, token, draw?.id]);
 
-    const committeeName = committee?.committeeName ?? committee?.title ?? committee?.name ?? "Committee";
+    const committeeName = committee?.committeeName ?? "—";
     
     const sanitizeAmount = (value) => {
         if (typeof value === "number") {
@@ -144,31 +144,21 @@ export function DrawMembersModal({
         return null;
     };
 
-    const drawAmount =
-        draw?.committeeDrawsAmount ??
-        draw?.committeeDrawAmount ??
-        draw?.amount ??
-        "—";
-    const minAmount =
-        draw?.committeeDrawMinAmount ??
-        draw?.minAmount ??
-        draw?.minimumAmount ??
-        "—";
+    const drawAmount = draw?.committeeDrawAmount ?? "—";
+    const minAmount = draw?.committeeDrawMinAmount ?? "—";
     const formattedDate = formatDrawDate(
-        draw?.committeeDrawDate ?? draw?.drawDate ?? draw?.date,
+        draw?.committeeDrawDate ?? "—",
     );
     const formattedTime = formatDrawTime(
-        draw?.committeeDrawTime ?? draw?.drawTime ?? draw?.time,
+        draw?.committeeDrawTime ?? "—",
     );
     const defaultDrawAmountValue = useMemo(() => sanitizeAmount(drawAmount), [drawAmount]);
-    const drawId = draw?.id ?? draw?.committeeDrawId ?? draw?.drawId;
+    const drawId = draw?.id;
     
+
     // Check if draw is completed
     const isDrawCompleted = 
-        draw?.isDrawCompleted === true || 
-        draw?.drawStatus === "COMPLETED" || 
-        draw?.status === "COMPLETED" ||
-        draw?.isCompleted === true;
+        draw?.isDrawCompleted === true ;
 
     const handleToggleDrawCompleted = async (member) => {
         if (!committee?.id || !token || !drawId) {
@@ -232,7 +222,7 @@ export function DrawMembersModal({
             return;
         }
 
-        const userId = member?.user?.id ?? member?.userId ?? member?.id;
+        const userId = member?.user?.id;
         if (!userId) {
             showToast({
                 title: "Missing user",
@@ -243,9 +233,7 @@ export function DrawMembersModal({
         }
 
         const amount = sanitizeAmount(
-            member?.userDrawAmountPaid ??
-                member?.drawAmount ??
-                defaultDrawAmountValue,
+            member?.userDrawAmountPaid ?? defaultDrawAmountValue,
         );
 
         if (!amount) {
@@ -383,8 +371,8 @@ export function DrawMembersModal({
                                         </thead>
                                         <tbody className="divide-y divide-white/5">
                                             {members.map((member, index) => {
-                                                const userId = member?.user?.id ?? member?.userId ?? member?.id;
-                                                const phoneNo = member?.user?.phoneNo ?? member?.phone ?? "";
+                                                const userId = member?.user?.id;
+                                                const phoneNo = member?.user?.phoneNo ?? "";
                                                 // Create a unique key using userId, phoneNo, and index as fallback
                                                 const uniqueKey = userId !== null && userId !== undefined 
                                                     ? `member-${userId}-${index}` 
@@ -396,7 +384,7 @@ export function DrawMembersModal({
                                                 return (
                                                     <tr key={uniqueKey} className="transition hover:bg-white/5">
                                                         <td className="px-5 py-4 font-semibold text-white">
-                                                            {member?.user?.name ?? member.memberName ?? "—"}
+                                                            {member?.user?.name ?? "—"}
                                                         </td>
                                                         <td className="px-5 py-4">
                                                             {phoneNo || "—"}
@@ -413,7 +401,7 @@ export function DrawMembersModal({
                                                         <td className="px-5 py-4">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => handleToggleDrawCompleted(member)}
+                                                                // onClick={() => handleToggleDrawCompleted(member)}
                                                                 disabled={togglingMemberId === (member?.user?.id ?? member?.userId ?? member?.id)}
                                                                 className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-medium transition ${
                                                                     member?.user?.isUserDrawCompleted

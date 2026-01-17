@@ -109,7 +109,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
             }
         }
         
-        console.log( "NODE_ENV: ===>", process.env.NODE_ENV);
+        
         if(process.env.NODE_ENV === "PRODUCTION");
         setIdDevelopmentMode(true);
         // Cleanup debounce timer on unmount
@@ -316,12 +316,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
 
     const saveDrawAmount = async (draw, amount) => {
         const newAmount = Number.parseFloat(amount);
-        const currentAmount = Number.parseFloat(
-            draw?.committeeDrawsAmount ??
-            draw?.committeeDrawAmount ??
-            draw?.amount ??
-            0
-        );
+        const currentAmount = Number.parseFloat( draw?.committeeDrawAmount ?? 0 );
 
         // If amount is invalid, don't save
         if (Number.isNaN(newAmount) || newAmount <= 0) {
@@ -372,11 +367,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
         
         // Set editing mode if not already editing
         if (editingDrawId !== draw.id) {
-            const currentAmount = 
-                draw?.committeeDrawsAmount ??
-                draw?.committeeDrawAmount ??
-                draw?.amount ??
-                "—";
+            const currentAmount = draw?.committeeDrawAmount ?? "—";
             setEditingDrawId(draw.id);
             setEditingAmount(currentAmount?.toString() || "");
         }
@@ -499,9 +490,9 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
         );
     }
 
-    const committeeName = committee.committeeName ?? committee.title ?? committee.name ?? "Untitled Committee";
-    const amount = committee.committeeAmount ?? committee.amount ?? committee.budget ?? "—";
-    const maxMembers = committee.commissionMaxMember ?? committee.maxMembers ?? committee.members ?? "—";
+    const committeeName = committee.committeeName ?? "Untitled Committee";
+    const amount = committee.committeeAmount  ?? "—";
+    const maxMembers = committee.commissionMaxMember ?? "—";
     const startDate = committee.startCommitteeDate
         ? new Date(committee.startCommitteeDate).toLocaleDateString("en-US", {
             month: "2-digit",
@@ -509,9 +500,9 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
             year: "numeric",
         })
         : "—";
-    const committeeType = committee.committeeType ?? committee.type ?? "—";
-    const statusLabel = committee.committeeStatus ?? committee.status ?? committee.state ?? "INACTIVE";
-    const userRole = profile?.data?.role ?? profile?.role ?? "";
+    const committeeType = committee.committeeType ?? "—";
+    const statusLabel = committee.committeeStatus ?? "INACTIVE";
+    const userRole = profile?.data?.role ?? "";
     const isAdmin = userRole === "ADMIN";
     
     // Get first letter of committee name for avatar
@@ -664,18 +655,10 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {committeeDrawsList.map((draw, index) => {
-                                        const drawAmount =
-                                            draw?.committeeDrawsAmount ??
-                                            draw?.committeeDrawAmount ??
-                                            draw?.amount ??
-                                            "—";
-                                        const minAmount =
-                                            draw?.committeeDrawMinAmount ??
-                                            draw?.minAmount ??
-                                            draw?.minimumAmount ??
-                                            "—";
-                                        const rawDate = draw?.committeeDrawDate ?? draw?.drawDate ?? draw?.date;
-                                        const rawTime = draw?.committeeDrawTime ?? draw?.drawTime ?? draw?.time;
+                                        const drawAmount = draw?.committeeDrawAmount ?? "—";
+                                        const minAmount = draw?.committeeDrawMinAmount ?? "—";
+                                        const rawDate = draw?.committeeDrawDate ?? "—";
+                                        const rawTime = draw?.committeeDrawTime ?? "—";
                                         const formattedDate = formatDrawDate(rawDate);
                                         const formattedTime = formatDrawTime(rawTime);
 
@@ -686,7 +669,8 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                             const startDate = new Date(rawDate);
                                             if (!Number.isNaN(startDate.getTime())) {
                                                 if (rawTime && typeof rawTime === "string") {
-                                                    const match = /^(\d{1,2}):?(\d{2})?:?(\d{2})?/.exec(rawTime);
+                                                    // Match: 7PM, 7:30PM, 07:30 PM, 19:30
+                                                    const match = /^(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?$/i.exec(rawTime.trim());
                                                     if (match) {
                                                         const [, h, m, s] = match;
                                                         startDate.setHours(
@@ -695,20 +679,28 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                             Number.parseInt(s ?? "0", 10),
                                                             0,
                                                         );
+
+                                                        // Handle AM / PM
+                                                        if (meridiem) {
+                                                            const upper = meridiem.toUpperCase();
+                                                            if (upper === "PM" && hours < 12) hours += 12;
+                                                            if (upper === "AM" && hours === 12) hours = 0;
+                                                        }
+                                                        startDate.setHours(hours, minutes, seconds, 0);
                                                     }
                                                 }
                                                 const now = new Date();
-                                                canOpenTimer = now >= startDate;
-                                                isDrawStarted = now >= startDate;
+
+                                                // 1 minute before start time
+                                                const startMinusOneMinute = new Date(startDate.getTime() - 60 * 1000);
+                                                canOpenTimer = now >= startMinusOneMinute;
+                                                isDrawStarted = now >= startMinusOneMinute;
                                             }
                                         }
 
                                         // Check if draw is completed
                                         const isDrawCompleted = 
-                                            draw?.isDrawCompleted === true || 
-                                            draw?.drawStatus === "COMPLETED" || 
-                                            draw?.status === "COMPLETED" ||
-                                            draw?.isCompleted === true;
+                                            draw?.isDrawCompleted === true;
 
                                         const isEditing = editingDrawId === draw.id;
                                         const displayAmount = isEditing ? editingAmount : drawAmount;
@@ -717,11 +709,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                         const handleInputFocus = (e, draw) => {
                                             e.stopPropagation();
                                             if (editingDrawId !== draw.id) {
-                                                const currentAmount = 
-                                                    draw?.committeeDrawsAmount ??
-                                                    draw?.committeeDrawAmount ??
-                                                    draw?.amount ??
-                                                    "—";
+                                                const currentAmount = draw?.committeeDrawAmount ?? "—";
                                                 setEditingDrawId(draw.id);
                                                 setEditingAmount(currentAmount?.toString() || "");
                                             }
@@ -747,6 +735,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                 </td>
                                                 {isAdmin ? (
                                                     <td className="px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 font-semibold text-white">
+                                                        {/* ₹ */}
                                                         <input
                                                             className="w-24 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/60 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                                             name="drawAmount"
@@ -782,6 +771,7 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                                     setTimerDraw(draw);
                                                                     setIsTimerModalOpen(true);
                                                                 }}
+                                                                disabled={isDrawCompleted}
                                                             >
                                                                 Open Timer
                                                             </Button>
@@ -798,17 +788,21 @@ export default function CommitteeDetailsPage({ committee, token, profile, onBack
                                                             <Button
                                                                 variant="primary"
                                                                 size="sm"
+                                                                style={{
+                                                                    fontSize: "15px",
+                                                                    padding: "8px 10px"
+                                                                }}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     handleStartLotteryDraw(draw);
                                                                 }}
                                                                 disabled={isDrawCompleted}
                                                             >
-                                                                Start Lottery Draw
+                                                                Start Lottery
                                                             </Button>
                                                         ) : (
                                                             <span className="text-xs font-medium text-white/40 italic">
-                                                                Draw not started yet
+                                                                Not Started yet
                                                             </span>
                                                         )}
                                                     </td>
